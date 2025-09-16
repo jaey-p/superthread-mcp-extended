@@ -172,11 +172,21 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 export const homeContent = async (req: Request): Promise<HtmlEscapedString> => {
 	// We have the README symlinked into the static directory, so we can fetch it
 	// and render it into HTML
-	const origin = new URL(req.url).origin;
-	const res = await env.ASSETS.fetch(`${origin}/README.md`);
-	const markdown = await res.text();
-	const content = await marked(markdown);
-	return html` <div class="max-w-4xl mx-auto markdown">${raw(content)}</div> `;
+	try {
+		const origin = new URL(req.url).origin;
+		const res = await env.ASSETS.fetch(`${origin}/README.md`);
+		if (!res.ok) {
+			throw new Error("README.md not found");
+		}
+		const markdown = await res.text();
+		const content = await marked(markdown);
+		return html` <div class="max-w-4xl mx-auto markdown">${raw(content)}</div> `;
+	} catch (error) {
+		return html` <div class="max-w-4xl mx-auto markdown">
+			<h1>Error</h1>
+			<p>Could not load README.md.</p>
+		</div> `;
+	}
 };
 
 export const renderLoggedInAuthorizeScreen = async (
@@ -369,7 +379,42 @@ export const renderAuthorizationRejectedContent = async (redirectUrl: string) =>
 	return renderApproveContent("Authorization rejected.", "error", redirectUrl);
 };
 
-export const parseApproveFormBody = async (body: { [x: string]: string | File }) => {
+export const renderToolsList = async (): Promise<HtmlEscapedString> => {
+	try {
+		const readme = await env.ASSETS.fetch("README.md").then((res) => res.text());
+		if (!readme) {
+			throw new Error("README.md not found");
+		}
+		const toolSections = readme.split("### ");
+		const tools = toolSections.slice(1).map((section) => {
+			const lines = section.split("\n");
+			const title = lines[0];
+			const toolList = lines.slice(1).filter((line) => line.startsWith("- ["));
+			return { title, toolList };
+		});
+
+		return html`
+			<div class="max-w-4xl mx-auto markdown">
+				<h1>Available Tools</h1>
+				${tools.map(
+					(tool) => html`
+						<h2>${tool.title}</h2>
+						<ul>
+							${tool.toolList.map((t) => html`<li>${t}</li>`)}
+						</ul>
+					`,
+				)}
+			</div>
+		`;
+	} catch (error) {
+		return html`
+			<div class="max-w-4xl mx-auto markdown">
+				<h1>Error</h1>
+				<p>Could not load README.md.</p>
+			</div>
+		`;
+	}
+};
 	const action = body.action as string;
 	const email = body.email as string;
 	const password = body.password as string;
