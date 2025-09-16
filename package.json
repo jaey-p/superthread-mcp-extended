@@ -1,6 +1,6 @@
 {
-	"name": "remote-mcp-server",
-	"version": "0.0.0",
+	"name": "superthread-mcp-extended",
+	"version": "0.0.1",
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
@@ -9,19 +9,28 @@
 		"lint:fix": "biome lint --fix",
 		"start": "wrangler dev",
 		"cf-typegen": "wrangler types",
-		"type-check": "tsc --noEmit"
+		"type-check": "tsc --noEmit",
+		"build": "esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --format=esm --external:@modelcontextprotocol/sdk --external:express --external:cloudflare:workers --sourcemap",
+		"test": "curl -f http://localhost:8787/health || echo 'Server not running'"
 	},
 	"dependencies": {
 		"@cloudflare/workers-oauth-provider": "^0.0.6",
-		"@modelcontextprotocol/sdk": "1.17.1",
+		"@modelcontextprotocol/sdk": "^1.17.5",
 		"agents": "^0.0.109",
 		"hono": "^4.8.12",
-		"zod": "^3.25.67"
+		"zod": "^3.25.67",
+		"cors": "^2.8.5",
+		"express": "^5.1.0"
 	},
 	"devDependencies": {
 		"marked": "^16.1.2",
 		"typescript": "5.8.3",
 		"workers-mcp": "^0.0.13",
-		"wrangler": "^4.27.0"
+		"wrangler": "^4.27.0",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.3",
+		"@types/node": "^24.3.1",
+		"esbuild": "^0.25.9",
+		"prettier": "^3.6.2"
 	}
 }
