@@ -7,11 +7,13 @@ import {
 	renderAuthorizationApprovedContent,
 	renderLoggedInAuthorizeScreen,
 	renderLoggedOutAuthorizeScreen,
+	renderToolsList,
 } from "./utils";
 import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 
-export type Bindings = Env & {
-	OAUTH_PROVIDER: OAuthHelpers;
+export type Bindings = {
+  OAUTH_PROVIDER: OAuthHelpers;
+  [key: string]: any;
 };
 
 const app = new Hono<{
@@ -105,6 +107,11 @@ app.post("/approve", async (c) => {
 			"MCP Remote Auth Demo - Authorization Status",
 		),
 	);
+});
+
+app.get("/tools", async (c) => {
+	const content = await renderToolsList();
+	return c.html(layout(content, "MCP Remote Auth Demo - Tools"));
 });
 
 export default app;
