@@ -8,16 +8,9 @@
 	],
 	"kv_namespaces": [
 		{
-			"binding": "OAUTH_KV",
-			"id": "<ADD YOUR KV NAMESPACEID HERE>"
-		},
-		{
 			"binding": "superthread",
 			"id": "0534992372e5482e92494175d4f8f24f"
 		}
-	],
-	"secrets": [
-		"SUPERTHREAD_PAT"
 	],
 	"observability": {
 		"enabled": true
