@@ -68,6 +68,23 @@ export async function updateMe(args: any, token: string) {
   }
 }
 
+export const getTeamMembersSchema = {
+  team_id: z.string().describe("The ID of the team to get members from. Use the get_me tool to get the team IDs available."),
+};
+
+export async function getTeamMembers(args: any, token: string) {
+  const { team_id } = args as z.infer<z.ZodObject<typeof getTeamMembersSchema>>;
+  const members = await apiClient.makeRequest(`/teams/${team_id}/members`, token);
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(members, null, 2),
+      },
+    ],
+  };
+}
+
 export function registerUserTools(server: McpServer, authToken: string) {
   server.registerTool(
     'get_me',

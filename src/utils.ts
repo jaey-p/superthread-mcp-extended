@@ -415,6 +415,7 @@ export const renderToolsList = async (): Promise<HtmlEscapedString> => {
 		`;
 	}
 };
+export const parseApproveFormBody = async (body: Record<string, string | File>) => {
 	const action = body.action as string;
 	const email = body.email as string;
 	const password = body.password as string;
