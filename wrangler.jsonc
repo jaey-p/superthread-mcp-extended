@@ -3,11 +3,17 @@
 	"name": "remote-mcp-server",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-10",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"kv_namespaces": [
 		{
 			"binding": "OAUTH_KV",
 			"id": "<ADD YOUR KV NAMESPACEID HERE>"
+		},
+		{
+			"binding": "superthread",
+			"id": "0534992372e5482e92494175d4f8f24f"
 		}
 	],
 	"secrets": [
@@ -16,5 +22,8 @@
 	"observability": {
 		"enabled": true
 	},
-	"assets": { "directory": "./static/", "binding": "ASSETS" }
+	"assets": {
+		"directory": "./static/",
+		"binding": "ASSETS"
+	}
 }
