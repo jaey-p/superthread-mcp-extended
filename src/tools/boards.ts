@@ -5,7 +5,7 @@ import { search } from "../lib/search.js";
 import { getUserFromToken, getUserTeams } from "./user.js";
 import type { Board, BoardSearchResult } from "../types/boards.js";
 
-export const createBoardSchema = z.object({
+export const createBoardSchema = {
 	team_id: z
 		.string()
 		.describe(
@@ -14,8 +14,9 @@ export const createBoardSchema = z.object({
 	title: z.string().describe("Board title"),
 	project_id: z
 		.string()
-		.optional()
-		.describe("Project ID to associate the board with"),
+		.describe(
+			"Project ID to associate the board with (required for board creation)",
+		),
 	content: z.string().optional().describe("Board description/content"),
 	icon: z.string().optional().describe("Board icon"),
 	color: z.string().optional().describe("Board color"),
@@ -43,7 +44,7 @@ export const createBoardSchema = z.object({
 		)
 		.optional()
 		.describe("Initial members to add to the board"),
-});
+};
 
 export async function createBoard(args: any, token: string) {
 	const startTime = Date.now();
@@ -222,7 +223,7 @@ export async function listBoards(args: any, token: string) {
 
 	try {
 		const { team_id, project_id, bookmarked, archived } = args as z.infer<
-			z.ZodObject<typeof listBoardsSchema>
+			typeof listBoardsSchema
 		>;
 		const params = new URLSearchParams();
 
@@ -287,9 +288,9 @@ export async function listBoards(args: any, token: string) {
 	}
 }
 
-export const getBoardSchema = {
+export const getBoardSchema = z.object({
 	query: z.string().describe("Board title or identifier to search for"),
-};
+});
 
 /**
  * Fetches detailed information about a specific board by its title or ID (minus the prefix)
@@ -306,7 +307,7 @@ export async function getBoard(args: any, token: string) {
 	);
 
 	try {
-		const { query } = args as z.infer<z.ZodObject<typeof getBoardSchema>>;
+		const { query } = args as z.infer<typeof getBoardSchema>;
 
 		const user = await getUserFromToken(token);
 		const teamIds = await getUserTeams(user);
@@ -392,7 +393,7 @@ export async function getBoard(args: any, token: string) {
 	}
 }
 
-export const deleteBoardSchema = {
+export const deleteBoardSchema = z.object({
 	team_id: z
 		.string()
 		.describe(
@@ -401,7 +402,7 @@ export const deleteBoardSchema = {
 	board_id: z
 		.string()
 		.describe("Use the get_board tool to retrieve the board ID"),
-};
+});
 
 export async function deleteBoard(args: any, token: string) {
 	const startTime = Date.now();
@@ -415,9 +416,7 @@ export async function deleteBoard(args: any, token: string) {
 	);
 
 	try {
-		const { team_id, board_id } = args as z.infer<
-			z.ZodObject<typeof deleteBoardSchema>
-		>;
+		const { team_id, board_id } = args as z.infer<typeof deleteBoardSchema>;
 		await apiClient.makeRequest(`/${team_id}/boards/${board_id}`, token, {
 			method: "DELETE",
 		});
@@ -467,7 +466,8 @@ export function registerBoardTools(server: McpServer, authToken: string) {
 		"create_board",
 		{
 			title: "Create a new board",
-			description: "Creates a new board within a specified workspace (team_id)",
+			description:
+				"Creates a new board within a specified workspace (team_id). Requires a valid project_id - use get_project or list_projects to find available project IDs.",
 			inputSchema: createBoardSchema,
 		},
 		(args) => createBoard(args, authToken),
