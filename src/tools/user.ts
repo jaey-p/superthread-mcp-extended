@@ -51,6 +51,16 @@ export const getTeamMembersSchema = z.object({
 		),
 });
 
+// Schema for updating a team member. Requires team_id, user_id and optional role.
+export const updateTeamMemberSchema = z.object({
+	team_id: z.string().describe("Team/workspace ID"),
+	user_id: z.string().describe("User ID of team member to update"),
+	role: z
+		.enum(["admin", "member", "viewer"])
+		.optional()
+		.describe("Updated role for team member"),
+});
+
 /**
  * Fetches the current user's details.
  * @param _args - Empty object.
@@ -125,6 +135,35 @@ export async function get_team_members(
 }
 
 /**
+ * Updates a team member's role.
+ * @param args - Contains the team_id, user_id, and optional role.
+ * @param token - The authentication token.
+ * @returns The updated team member information.
+ */
+export async function update_team_member(
+	args: z.infer<typeof updateTeamMemberSchema>,
+	token: string,
+) {
+	const { team_id, user_id, ...payload } = args;
+	const response = await apiClient.makeRequest(
+		`/teams/${team_id}/members/${user_id}`,
+		token,
+		{
+			method: "PATCH",
+			body: JSON.stringify(payload),
+		},
+	);
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: JSON.stringify(response, null, 2),
+			},
+		],
+	};
+}
+
+/**
  * Registers all user-related tools with the MCP server.
  * @param server - The MCP server instance.
  * @param authToken - The authentication token to be used by the tools.
@@ -169,5 +208,15 @@ export function registerUserTools(server: McpServer, authToken: string) {
 			inputSchema: getTeamMembersSchema.shape,
 		},
 		(args) => get_team_members(args, authToken),
+	);
+
+	server.registerTool(
+		"update_team_member",
+		{
+			title: "Update Team Member",
+			description: "Updates a team member's role and other properties.",
+			inputSchema: updateTeamMemberSchema.shape,
+		},
+		(args) => update_team_member(args, authToken),
 	);
 }
