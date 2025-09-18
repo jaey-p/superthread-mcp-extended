@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiClient } from "../lib/api-client.js";
-import { search } from "../lib/search";
-import { getUserFromToken, getUserTeams } from "./user";
-import type { Board, BoardSearchResult } from "../types/boards";
+import { search } from "../lib/search.js";
+import { getUserFromToken, getUserTeams } from "./user.js";
+import type { Board, BoardSearchResult } from "../types/boards.js";
 
-export const createBoardSchema = {
+export const createBoardSchema = z.object({
 	team_id: z
 		.string()
 		.describe(
@@ -43,7 +43,7 @@ export const createBoardSchema = {
 		)
 		.optional()
 		.describe("Initial members to add to the board"),
-};
+});
 
 export async function createBoard(args: any, token: string) {
 	const startTime = Date.now();
@@ -204,7 +204,7 @@ export async function updateBoard(args: any, token: string) {
 
 export const listBoardsSchema = {
 	team_id: z.string().describe("Use the getMe tool to get the team ID"),
-	project_id: z.string().describe("Project ID"),
+	project_id: z.string().optional().describe("Project ID to filter boards by"),
 	bookmarked: z.boolean().optional().describe("Filter for bookmarked boards"),
 	archived: z.boolean().optional().describe("Filter for archived boards"),
 };
@@ -224,11 +224,23 @@ export async function listBoards(args: any, token: string) {
 		const { team_id, project_id, bookmarked, archived } = args as z.infer<
 			z.ZodObject<typeof listBoardsSchema>
 		>;
-		const params = new URLSearchParams({
-			...(project_id !== undefined && { project_id }),
-			...(bookmarked !== undefined && { bookmarked: String(bookmarked) }),
-			...(archived !== undefined && { archived: String(archived) }),
-		});
+		const params = new URLSearchParams();
+
+		// Add parameters if provided
+		if (project_id !== undefined) {
+			params.append("project_id", project_id);
+		}
+		if (bookmarked !== undefined) {
+			params.append("bookmarked", String(bookmarked));
+		}
+		if (archived !== undefined) {
+			params.append("archived", String(archived));
+		}
+
+		// Ensure at least one required parameter is present - API requires one of: bookmarked, archived, or project_id
+		if (params.toString() === "") {
+			params.append("bookmarked", "false");
+		}
 
 		const boards = await apiClient.makeRequest(
 			`/${team_id}/boards?${params}`,
