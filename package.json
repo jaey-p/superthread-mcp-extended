@@ -19,17 +19,19 @@
 		"hono": "^4.8.12",
 		"zod": "^3.25.67",
 		"cors": "^2.8.5",
-		"express": "^5.1.0"
+		"express": "^5.1.0",
+		"toucan-js": "^3.3.0"
 	},
 	"devDependencies": {
-		"marked": "^16.1.2",
-		"typescript": "5.8.3",
-		"workers-mcp": "^0.0.13",
-		"wrangler": "^4.27.0",
+		"@biomejs/biome": "^2.2.4",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.3",
 		"@types/node": "^24.3.1",
 		"esbuild": "^0.25.9",
-		"prettier": "^3.6.2"
+		"marked": "^16.1.2",
+		"prettier": "^3.6.2",
+		"typescript": "5.8.3",
+		"workers-mcp": "^0.0.13",
+		"wrangler": "^4.27.0"
 	}
 }

@@ -1,522 +1,268 @@
 import { z } from "zod";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiClient } from "../lib/api-client.js";
 import { search } from "../lib/search.js";
-import { getUserFromToken, getUserTeams } from "./user.js";
 import type { Board, BoardSearchResult } from "../types/boards.js";
+import { getUserFromToken, getUserTeams } from "./user.js";
 
-export const createBoardSchema = {
+const createBoardSchema = z.object({
 	team_id: z
 		.string()
 		.describe(
-			"Use the get_me tool first to get the team IDs available. If needed, confirm with the user which team they want to use.",
+			"The ID of the team to create the board in. Use `get_me` to find available team IDs.",
 		),
-	title: z.string().describe("Board title (required)"),
 	project_id: z
 		.string()
-		.describe(
-			"Project ID to associate the board with (required for board creation)",
-		),
-	content: z.string().optional().describe("Board description/content"),
-	icon: z.string().optional().describe("Board icon"),
-	color: z.string().optional().describe("Board color"),
-	image_urls: z.string().optional().describe("Image URLs as string"),
-	thumbnail_url: z.string().optional().describe("Thumbnail image URL"),
-	layout: z.string().optional().describe('Board layout (defaults to "board")'),
-	lists: z
-		.array(
-			z.object({
-				title: z.string().describe("List title"),
-				content: z.string().optional().describe("List description"),
-				icon: z.string().optional().describe("List icon"),
-				behavior: z
-					.string()
-					.optional()
-					.describe('List behavior (e.g., "backlog")'),
-			}),
-		)
-		.optional()
-		.describe("Initial lists to create for the board"),
-	members: z
-		.array(
-			z.object({
-				user_id: z.string().describe("User ID"),
-				role: z.string().describe('User role (e.g., "admin")'),
-			}),
-		)
-		.optional()
-		.describe("Initial members to add to the board"),
-};
-
-export async function createBoard(args: any, token: string) {
-	const startTime = Date.now();
-
-	console.log(
-		JSON.stringify({
-			event: "tool_call_start",
-			tool_name: "create_board",
-			timestamp: new Date().toISOString(),
-		}),
-	);
-
-	try {
-		const typedArgs = args as z.infer<z.ZodObject<typeof createBoardSchema>>;
-		const { team_id, ...boardData } = typedArgs;
-
-		const payload = {
-			layout: "board",
-			...boardData,
-		};
-
-		const board = await apiClient.makeRequest(`/v1/${team_id}/boards`, token, {
-			method: "POST",
-			body: JSON.stringify(payload),
-		});
-
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_success",
-				tool_name: "create_board",
-				duration_ms,
-				team_id,
-				board_id: board?.id,
-				status: "success",
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify(board, null, 2),
-				},
-			],
-		};
-	} catch (error) {
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_error",
-				tool_name: "create_board",
-				duration_ms,
-				status: "error",
-				error: error instanceof Error ? error.message : String(error),
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		throw error;
-	}
-}
-
-export const updateBoardSchema = {
-	team_id: z
-		.string()
-		.describe(
-			"Use the get_me tool first to get the team IDs available. If needed, confirm with the user which team they want to use.",
-		),
-	board_id: z
-		.string()
-		.describe("Use the get_board tool to retrieve the board ID"),
-	project_id: z
+		.describe("The ID of the project to associate the board with."),
+	title: z.string().describe("The title of the board."),
+	content: z
 		.string()
 		.optional()
-		.describe("Project ID to associate the board with"),
-	title: z.string().optional().describe("Board title"),
-	content: z.string().optional().describe("Board description/content"),
-	icon: z.string().optional().describe("Board icon"),
-	color: z.string().optional().describe("Board color"),
-	image_urls: z.array(z.string()).optional().describe("Array of image URLs"),
-	thumbnail_url: z.string().optional().describe("Thumbnail image URL"),
-	archived: z.boolean().optional().describe("Archive/unarchive the board"),
-	position: z.number().optional().describe("Position/ordering of the board"),
-	vcs_mapping: z
-		.record(z.any())
+		.describe("The description or content for the board."),
+	icon: z.string().optional().describe("An icon to represent the board."),
+	color: z.string().optional().describe("A color to associate with the board."),
+	layout: z
+		.string()
 		.optional()
-		.describe("Version control system mappings"),
-	layout: z.string().optional().describe("Board layout"),
-};
-
-export async function updateBoard(args: any, token: string) {
-	const startTime = Date.now();
-
-	console.log(
-		JSON.stringify({
-			event: "tool_call_start",
-			tool_name: "update_board",
-			timestamp: new Date().toISOString(),
-		}),
-	);
-
-	try {
-		const typedArgs = args as z.infer<z.ZodObject<typeof updateBoardSchema>>;
-		const { team_id, board_id, ...updateData } = typedArgs;
-
-		const board = await apiClient.makeRequest(
-			`/${team_id}/boards/${board_id}`,
-			token,
-			{
-				method: "PATCH",
-				body: JSON.stringify(updateData),
-			},
-		);
-
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_success",
-				tool_name: "update_board",
-				duration_ms,
-				team_id,
-				board_id,
-				status: "success",
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify(board, null, 2),
-				},
-			],
-		};
-	} catch (error) {
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_error",
-				tool_name: "update_board",
-				duration_ms,
-				status: "error",
-				error: error instanceof Error ? error.message : String(error),
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		throw error;
-	}
-}
-
-export const listBoardsSchema = z.object({
-	team_id: z.string().describe("Use the getMe tool to get the team ID"),
-	project_id: z.string().optional().describe("Project ID to filter boards by"),
-	bookmarked: z.boolean().optional().describe("Filter for bookmarked boards"),
-	archived: z.boolean().optional().describe("Filter for archived boards"),
+		.default("board")
+		.describe('The layout of the board, defaults to "board".'),
 });
 
-export async function listBoards(args: any, token: string) {
-	const startTime = Date.now();
+export async function create_board(
+	args: z.infer<typeof createBoardSchema>,
+	token: string,
+): Promise<Board> {
+	const { team_id, ...payload } = args;
 
-	console.log(
-		JSON.stringify({
-			event: "tool_call_start",
-			tool_name: "list_boards",
-			timestamp: new Date().toISOString(),
-		}),
-	);
-
-	try {
-		const { team_id, project_id, bookmarked, archived } = args as z.infer<
-			typeof listBoardsSchema
-		>;
-		const params = new URLSearchParams();
-
-		// Add parameters if provided
-		if (project_id !== undefined) {
-			params.append("project_id", project_id);
-		}
-		if (bookmarked !== undefined) {
-			params.append("bookmarked", String(bookmarked));
-		}
-		if (archived !== undefined) {
-			params.append("archived", String(archived));
-		}
-
-		// Ensure at least one required parameter is present - API requires one of: bookmarked, archived, or project_id
-		if (params.toString() === "") {
-			params.append("bookmarked", "false");
-		}
-
-		const boards = await apiClient.makeRequest(
-			`/${team_id}/boards?${params}`,
-			token,
-		);
-
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_success",
-				tool_name: "list_boards",
-				duration_ms,
-				team_id,
-				project_id,
-				status: "success",
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify(boards, null, 2),
-				},
-			],
-		};
-	} catch (error) {
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_error",
-				tool_name: "list_boards",
-				duration_ms,
-				status: "error",
-				error: error instanceof Error ? error.message : String(error),
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		throw error;
+	if (!team_id) {
+		throw new Error("`team_id` is required to create a board.");
 	}
+
+	const user = await getUserFromToken(token);
+	const teams = await getUserTeams(user);
+	const team = teams.find((t: any) => t.id === team_id);
+
+	if (!team) {
+		throw new Error(
+			`Team with ID "${team_id}" not found or you don't have access.`,
+		);
+	}
+
+	if (team.role !== "admin" && team.role !== "owner") {
+		throw new Error(
+			`You must be an admin or owner to create a board in the "${team.name}" team.`,
+		);
+	}
+
+	return await apiClient.makeRequest(`/v1/${team_id}/boards`, token, {
+		method: "POST",
+		body: JSON.stringify(payload),
+	});
 }
 
-export const getBoardSchema = {
-	query: z.string().describe("Board title or identifier to search for"),
-};
+const updateBoardSchema = z.object({
+	team_id: z.string().describe("The ID of the team containing the board."),
+	board_id: z.string().describe("The ID of the board to update."),
+	project_id: z
+		.string()
+		.optional()
+		.describe("The new project ID to associate the board with."),
+	title: z.string().optional().describe("The new title for the board."),
+	content: z
+		.string()
+		.optional()
+		.describe("The new description or content for the board."),
+	icon: z.string().optional().describe("The new icon for the board."),
+	color: z.string().optional().describe("The new color for the board."),
+	archived: z.boolean().optional().describe("Whether to archive the board."),
+});
 
-/**
- * Fetches detailed information about a specific board by its title or ID (minus the prefix)
- */
-export async function getBoard(args: any, token: string) {
-	const startTime = Date.now();
-
-	console.log(
-		JSON.stringify({
-			event: "tool_call_start",
-			tool_name: "get_board",
-			timestamp: new Date().toISOString(),
-		}),
-	);
-
-	try {
-		const { query } = args as z.infer<z.ZodObject<typeof getBoardSchema>>;
-
-		const user = await getUserFromToken(token);
-		const teamIds = await getUserTeams(user);
-
-		// The list of boards returned. Ideally, this should be one board. But
-		// the search may return multiple boards if the user has access to multiple teams.
-		const allBoards: Board[] = [];
-
-		// Declare a tuple of board search result and team ID
-		const seenBoards: [BoardSearchResult, string][] = [];
-
-		for (const teamId of teamIds) {
-			try {
-				const searchResults = await search(teamId, token, {
-					query,
-					types: ["boards"],
-				});
-
-				if (searchResults.boards) {
-					for (const board of searchResults.boards) {
-						if (!seenBoards.find((b) => b[0].id === board.id)) {
-							seenBoards.push([board, teamId]);
-						}
-					}
-				}
-			} catch (error) {
-				console.error(`Error fetching board IDs for team ${teamId}:`, error);
-				throw new Error(
-					`Error fetching board IDs for team ${teamId}: ${error}`,
-				);
-			}
-		}
-
-		if (!seenBoards.length) {
-			throw new Error("No boards found");
-		}
-
-		for (const [seenBoard, teamId] of seenBoards) {
-			const board = await apiClient.makeRequest(
-				`/${teamId}/boards/${seenBoard.id}`,
-				token,
-			);
-			allBoards.push(board.board);
-		}
-
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_success",
-				tool_name: "get_board",
-				duration_ms,
-				user_id: user?.user?.id,
-				boards_found: allBoards.length,
-				status: "success",
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify(allBoards, null, 2),
-				},
-			],
-		};
-	} catch (error) {
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_error",
-				tool_name: "get_board",
-				duration_ms,
-				status: "error",
-				error: error instanceof Error ? error.message : String(error),
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		throw error;
-	}
+export async function update_board(
+	args: z.infer<typeof updateBoardSchema>,
+	token: string,
+): Promise<Board> {
+	const { team_id, board_id, ...payload } = args;
+	return await apiClient.makeRequest(`/${team_id}/boards/${board_id}`, token, {
+		method: "PATCH",
+		body: JSON.stringify(payload),
+	});
 }
 
-export const deleteBoardSchema = {
-	team_id: z
+const listBoardsSchema = z.object({
+	team_id: z.string().describe("The ID of the team to list boards from."),
+	project_id: z
 		.string()
-		.describe(
-			"Use the get_me tool first to get the team IDs available. If needed, confirm with the user which team they want to use.",
-		),
-	board_id: z
-		.string()
-		.describe("Use the get_board tool to retrieve the board ID"),
-};
+		.optional()
+		.describe("Filter boards by a specific project ID."),
+	bookmarked: z.boolean().optional().describe("Filter for bookmarked boards."),
+	archived: z.boolean().optional().describe("Filter for archived boards."),
+});
 
-export async function deleteBoard(args: any, token: string) {
-	const startTime = Date.now();
+export async function list_boards(
+	args: z.infer<typeof listBoardsSchema>,
+	token: string,
+): Promise<Board[]> {
+	const { team_id, ...queryParams } = args;
+	const params = new URLSearchParams();
 
-	console.log(
-		JSON.stringify({
-			event: "tool_call_start",
-			tool_name: "delete_board",
-			timestamp: new Date().toISOString(),
-		}),
+	if (queryParams.project_id)
+		params.append("project_id", queryParams.project_id);
+	if (queryParams.bookmarked !== undefined)
+		params.append("bookmarked", String(queryParams.bookmarked));
+	if (queryParams.archived !== undefined)
+		params.append("archived", String(queryParams.archived));
+
+	if (params.toString() === "") {
+		throw new Error(
+			"At least one of `project_id`, `bookmarked`, or `archived` must be provided.",
+		);
+	}
+
+	return await apiClient.makeRequest(
+		`/${team_id}/boards?${params.toString()}`,
+		token,
 	);
+}
 
-	try {
-		const { team_id, board_id } = args as z.infer<typeof deleteBoardSchema>;
-		await apiClient.makeRequest(`/${team_id}/boards/${board_id}`, token, {
-			method: "DELETE",
+const getBoardSchema = z.object({
+	query: z.string().describe("The title or ID of the board to search for."),
+});
+
+export async function get_board(
+	args: z.infer<typeof getBoardSchema>,
+	token: string,
+): Promise<Board[]> {
+	const user = await getUserFromToken(token);
+	const teamIds = await getUserTeams(user).then((teams: any[]) =>
+		teams.map((t: any) => t.id),
+	);
+	const seenBoards = new Map<
+		string,
+		{ board: BoardSearchResult; teamId: string }
+	>();
+
+	for (const teamId of teamIds) {
+		const results = await search(teamId, token, {
+			query: args.query,
+			types: ["boards"],
 		});
-
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_success",
-				tool_name: "delete_board",
-				duration_ms,
-				team_id,
-				board_id,
-				status: "success",
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: "Board deleted successfully",
-				},
-			],
-		};
-	} catch (error) {
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_error",
-				tool_name: "delete_board",
-				duration_ms,
-				status: "error",
-				error: error instanceof Error ? error.message : String(error),
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		throw error;
+		results.boards?.forEach((board) => {
+			if (!seenBoards.has(board.id)) {
+				seenBoards.set(board.id, { board, teamId });
+			}
+		});
 	}
+
+	if (seenBoards.size === 0) {
+		throw new Error(`No boards found matching query: "${args.query}"`);
+	}
+
+	const boardDetails = await Promise.all(
+		Array.from(seenBoards.values()).map(({ board, teamId }) =>
+			apiClient
+				.makeRequest(`/${teamId}/boards/${board.id}`, token)
+				.then((res: any) => res.board),
+		),
+	);
+
+	return boardDetails;
+}
+
+const deleteBoardSchema = z.object({
+	team_id: z.string().describe("The ID of the team containing the board."),
+	board_id: z.string().describe("The ID of the board to delete."),
+});
+
+export async function delete_board(
+	args: z.infer<typeof deleteBoardSchema>,
+	token: string,
+): Promise<{ success: boolean }> {
+	await apiClient.makeRequest(
+		`/${args.team_id}/boards/${args.board_id}`,
+		token,
+		{
+			method: "DELETE",
+		},
+	);
+	return { success: true };
 }
 
 export function registerBoardTools(server: McpServer, authToken: string) {
 	server.registerTool(
 		"create_board",
 		{
-			title: "Create a new board",
+			title: "Create Board",
 			description:
-				"Creates a new board within a specified workspace (team_id). Requires a valid project_id - use get_project or list_projects to find available project IDs.",
-			inputSchema: createBoardSchema,
+				"Creates a new board. The user must be an admin or owner of the team to create a board.",
+			inputSchema: createBoardSchema.shape,
 		},
-		(args) => createBoard(args, authToken),
+		async (args) => {
+			const result = await create_board(args, authToken);
+			return {
+				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+			};
+		},
 	);
 
 	server.registerTool(
 		"update_board",
 		{
-			title: "Update an existing board",
-			description:
-				"Updates an existing board within a specified workspace (team_id)",
-			inputSchema: updateBoardSchema,
+			title: "Update Board",
+			description: "Updates an existing board's properties.",
+			inputSchema: updateBoardSchema.shape,
 		},
-		(args) => updateBoard(args, authToken),
+		async (args) => {
+			const result = await update_board(args, authToken);
+			return {
+				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+			};
+		},
 	);
 
 	server.registerTool(
 		"list_boards",
 		{
-			title:
-				"Fetches a list of all boards within a specified workspace (team_id)",
+			title: "List Boards",
 			description:
-				"Fetches a list of all boards within a specified workspace (team_id)",
-			inputSchema: listBoardsSchema,
+				"Lists boards for a team, filtered by project, bookmark status, or archived status. At least one filter is required.",
+			inputSchema: listBoardsSchema.shape,
 		},
-		(args) => listBoards(args, authToken),
+		async (args) => {
+			const result = await list_boards(args, authToken);
+			return {
+				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+			};
+		},
 	);
 
 	server.registerTool(
 		"get_board",
 		{
-			title: "Retrieve all details about a specific board",
+			title: "Get Board",
 			description:
-				"Fetches detailed information about a specific board identified by its unique ID within a workspace (team_id)",
-			inputSchema: getBoardSchema,
+				"Retrieves detailed information about one or more boards by searching for a title or ID.",
+			inputSchema: getBoardSchema.shape,
 		},
-		(args) => getBoard(args, authToken),
+		async (args) => {
+			const result = await get_board(args, authToken);
+			return {
+				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+			};
+		},
 	);
 
 	server.registerTool(
 		"delete_board",
 		{
-			title: "Delete a board",
-			description:
-				"Deletes a specific board, identified by its board_id, within the specified workspace (team_id)",
-			inputSchema: deleteBoardSchema,
+			title: "Delete Board",
+			description: "Deletes a board.",
+			inputSchema: deleteBoardSchema.shape,
 		},
-		(args) => deleteBoard(args, authToken),
+		async (args) => {
+			const result = await delete_board(args, authToken);
+			return {
+				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+			};
+		},
 	);
 }

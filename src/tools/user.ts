@@ -1,239 +1,173 @@
 import { z } from "zod";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiClient } from "../lib/api-client.js";
-import type { User } from "../types/user.js";
 
-export const getMeSchema = {};
+// Schema for getting the current user's information. No input needed.
+export const getMeSchema = z.object({});
 
-export const updateMeSchema = {
-	first_name: z.string().optional().describe("First name"),
-	last_name: z.string().optional().describe("Last name"),
-	display_name: z.string().optional().describe("Display name"),
-	profile_image: z.string().optional().describe("Profile image URL"),
-	timezone_id: z.string().optional().describe("Timezone ID"),
-	locale: z.string().optional().describe("Locale"),
-};
+// Schema for updating the current user's information. All fields are optional.
+export const updateMeSchema = z.object({
+	first_name: z.string().optional().describe("The user's first name."),
+	last_name: z.string().optional().describe("The user's last name."),
+	display_name: z.string().optional().describe("The user's display name."),
+	profile_image: z
+		.string()
+		.url()
+		.optional()
+		.describe("URL for the user's profile image."),
+	thumbnail_image: z
+		.string()
+		.url()
+		.optional()
+		.describe("URL for the user's thumbnail image."),
+	color: z
+		.string()
+		.optional()
+		.describe("A color associated with the user (e.g., 'red', '#FF0000')."),
+	timezone_id: z
+		.string()
+		.optional()
+		.describe("The user's timezone identifier (e.g., 'America/Los_Angeles')."),
+	autodetect_timezone_id: z
+		.boolean()
+		.optional()
+		.describe("Whether to automatically detect the user's timezone."),
+	locale: z
+		.string()
+		.optional()
+		.describe("The user's preferred locale (e.g., 'en')."),
+	job_description: z
+		.string()
+		.optional()
+		.describe("The user's job description."),
+});
 
-export const getUserFromToken = async (token: string): Promise<User> => {
-	return await apiClient.makeRequest("/users/me", token);
-};
-
-export async function getMe(args: any, token: string) {
-	const startTime = Date.now();
-
-	console.log(
-		JSON.stringify({
-			event: "tool_call_start",
-			tool_name: "get_me",
-			timestamp: new Date().toISOString(),
-		}),
-	);
-
-	try {
-		const user = await getUserFromToken(token);
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_success",
-				tool_name: "get_me",
-				duration_ms,
-				user_id: user?.user?.id,
-				status: "success",
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify(user, null, 2),
-				},
-			],
-		};
-	} catch (error) {
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_error",
-				tool_name: "get_me",
-				duration_ms,
-				status: "error",
-				error: error instanceof Error ? error.message : String(error),
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		throw error;
-	}
-}
-
-export async function getUserTeams(user: User): Promise<string[]> {
-	return user?.user?.teams?.map((team: any) => team.id) || [];
-}
-
-export async function updateMe(args: any, token: string) {
-	const startTime = Date.now();
-
-	console.log(
-		JSON.stringify({
-			event: "tool_call_start",
-			tool_name: "update_me",
-			timestamp: new Date().toISOString(),
-		}),
-	);
-
-	try {
-		const typedArgs = args as z.infer<z.ZodObject<typeof updateMeSchema>>;
-		const allowedFields = [
-			"first_name",
-			"last_name",
-			"display_name",
-			"profile_image",
-			"timezone_id",
-			"locale",
-		];
-
-		const updateData: Record<string, any> = {};
-		for (const [key, value] of Object.entries(typedArgs)) {
-			if (allowedFields.includes(key) && value !== undefined) {
-				updateData[key] = value;
-			}
-		}
-
-		const user = await apiClient.makeRequest("/users/me", token, {
-			method: "PATCH",
-			body: JSON.stringify(updateData),
-		});
-
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_success",
-				tool_name: "update_me",
-				duration_ms,
-				user_id: user?.user?.id,
-				status: "success",
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify(user, null, 2),
-				},
-			],
-		};
-	} catch (error) {
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_error",
-				tool_name: "update_me",
-				duration_ms,
-				status: "error",
-				error: error instanceof Error ? error.message : String(error),
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		throw error;
-	}
-}
-
-export const getTeamMembersSchema = {
+// Schema for getting team members. Requires a team_id.
+export const getTeamMembersSchema = z.object({
 	team_id: z
 		.string()
 		.describe(
-			"The ID of the team to get members from. Use the get_me tool to get the team IDs available.",
+			"The ID of the team to get members from. Use the get_me tool to find your team IDs.",
 		),
-};
+});
 
-export async function getTeamMembers(args: any, token: string) {
-	const startTime = Date.now();
+/**
+ * Fetches the current user's details.
+ * @param _args - Empty object.
+ * @param token - The authentication token.
+ * @returns The user's information.
+ */
+export async function get_me(
+	_args: z.infer<typeof getMeSchema>,
+	token: string,
+) {
+	// The API docs specify /v1/users/{user_id}, but a "me" endpoint is standard for PAT-based auth.
+	// The previous implementation used /users/me, which is a sensible convention.
+	// Without a user_id, this is the only way to get the current user's data.
+	const response = await apiClient.makeRequest("/users/me", token);
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: JSON.stringify(response, null, 2),
+			},
+		],
+	};
+}
 
-	console.log(
-		JSON.stringify({
-			event: "tool_call_start",
-			tool_name: "get_team_members",
-			timestamp: new Date().toISOString(),
-		}),
+/**
+ * Updates the current user's details.
+ * @param args - The fields to update.
+ * @param token - The authentication token.
+ * @returns The updated user's information.
+ */
+export async function update_me(
+	args: z.infer<typeof updateMeSchema>,
+	token: string,
+) {
+	const response = await apiClient.makeRequest("/users/me", token, {
+		method: "PATCH",
+		body: JSON.stringify(args),
+	});
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: JSON.stringify(response, null, 2),
+			},
+		],
+	};
+}
+
+/**
+ * Fetches the members of a specific team.
+ * @param args - Contains the team_id.
+ * @param token - The authentication token.
+ * @returns A list of team members.
+ */
+export async function get_team_members(
+	args: z.infer<typeof getTeamMembersSchema>,
+	token: string,
+) {
+	const { team_id } = args;
+	const response = await apiClient.makeRequest(
+		`/teams/${team_id}/members`,
+		token,
 	);
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: JSON.stringify(response, null, 2),
+			},
+		],
+	};
+}
 
-	try {
-		const { team_id } = args as z.infer<
-			z.ZodObject<typeof getTeamMembersSchema>
-		>;
-		const members = await apiClient.makeRequest(
-			`/teams/${team_id}/members`,
-			token,
-		);
+/**
+ * Registers all user-related tools with the MCP server.
+ * @param server - The MCP server instance.
+ * @param authToken - The authentication token to be used by the tools.
+ */
+export async function getUserFromToken(token: string) {
+	const response = await apiClient.makeRequest("/users/me", token);
+	return response;
+}
 
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_success",
-				tool_name: "get_team_members",
-				duration_ms,
-				team_id,
-				status: "success",
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		return {
-			content: [
-				{
-					type: "text" as const,
-					text: JSON.stringify(members, null, 2),
-				},
-			],
-		};
-	} catch (error) {
-		const duration_ms = Date.now() - startTime;
-
-		console.log(
-			JSON.stringify({
-				event: "tool_call_error",
-				tool_name: "get_team_members",
-				duration_ms,
-				status: "error",
-				error: error instanceof Error ? error.message : String(error),
-				timestamp: new Date().toISOString(),
-			}),
-		);
-
-		throw error;
-	}
+export async function getUserTeams(user: any) {
+	return user.teams || [];
 }
 
 export function registerUserTools(server: McpServer, authToken: string) {
 	server.registerTool(
 		"get_me",
 		{
-			title: "Fetch the current user Information",
+			title: "Get Current User",
 			description:
-				"Fetches detailed information about the current user, including profile details, teams, locale, and other metadata",
-			inputSchema: {},
+				"Fetches the profile information for the currently authenticated user.",
+			inputSchema: getMeSchema.shape,
 		},
-		(args) => getMe(args, authToken),
+		(args) => get_me(args, authToken),
 	);
 
 	server.registerTool(
 		"update_me",
 		{
-			title: "Update User Information",
+			title: "Update Current User",
 			description:
-				"Updates the current user profile fields such as name, profile image, timezone, and company information",
-			inputSchema: updateMeSchema,
+				"Updates the profile information for the currently authenticated user.",
+			inputSchema: updateMeSchema.shape,
 		},
-		(args) => updateMe(args, authToken),
+		(args) => update_me(args, authToken),
+	);
+
+	server.registerTool(
+		"get_team_members",
+		{
+			title: "Get Team Members",
+			description: "Fetches the list of members for a specified team.",
+			inputSchema: getTeamMembersSchema.shape,
+		},
+		(args) => get_team_members(args, authToken),
 	);
 }

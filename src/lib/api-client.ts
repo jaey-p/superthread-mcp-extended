@@ -1,96 +1,70 @@
-const BASE_URL = "https://api.superthread.com/v1";
+export class SuperthreadAPIError extends Error {
+	constructor(
+		public readonly status: number,
+		public readonly statusText: string,
+		public readonly responseText: string,
+	) {
+		super(`API request failed: ${status} ${statusText} - ${responseText}`);
+		this.name = "SuperthreadAPIError";
+	}
+}
 
 export class SuperthreadAPIClient {
-	async makeRequest(
+	private readonly baseUrl: string;
+
+	constructor(baseUrl?: string) {
+		this.baseUrl = baseUrl ?? "https://api.superthread.com/v1";
+	}
+
+	public async makeRequest<T>(
 		endpoint: string,
 		token: string,
 		options: RequestInit = {},
-	): Promise<any> {
-		const startTime = Date.now();
-
+	): Promise<T> {
 		if (!token) {
 			throw new Error(
 				"Authorization token is required. Please provide a valid Superthread Personal Access Token.",
 			);
 		}
 
-		const url = `${BASE_URL}${endpoint}`;
+		const url = `${this.baseUrl}${endpoint}`;
 		const headers = {
 			Authorization: `Bearer ${token}`,
 			"Content-Type": "application/json",
 			...options.headers,
 		};
 
-		console.log(
-			JSON.stringify({
-				event: "api_call_start",
-				endpoint,
-				method: options.method || "GET",
-				url,
-				timestamp: new Date().toISOString(),
-			}),
-		);
+		const startTime = Date.now();
+		const method = options.method ?? "GET";
 
 		try {
-			const response = await fetch(url, {
-				...options,
-				headers,
-			});
-
-			const duration_ms = Date.now() - startTime;
+			const response = await fetch(url, { ...options, headers });
+			const durationMs = Date.now() - startTime;
 
 			if (!response.ok) {
 				const errorText = await response.text();
-
-				console.log(
-					JSON.stringify({
-						event: "api_call_error",
-						endpoint,
-						method: options.method || "GET",
-						status: response.status,
-						statusText: response.statusText,
-						duration_ms,
-						error: errorText,
-						timestamp: new Date().toISOString(),
-					}),
-				);
-
-				throw new Error(
-					`API request failed: ${response.status} ${response.statusText} - ${errorText}`,
+				throw new SuperthreadAPIError(
+					response.status,
+					response.statusText,
+					errorText,
 				);
 			}
-
-			console.log(
-				JSON.stringify({
-					event: "api_call_success",
-					endpoint,
-					method: options.method || "GET",
-					status: response.status,
-					duration_ms,
-					timestamp: new Date().toISOString(),
-				}),
-			);
 
 			if (response.status === 204) {
-				return null;
+				return null as T;
 			}
 
-			return await response.json();
+			return (await response.json()) as T;
 		} catch (error) {
-			const duration_ms = Date.now() - startTime;
+			if (error instanceof SuperthreadAPIError) {
+				throw error;
+			}
 
-			console.log(
-				JSON.stringify({
-					event: "api_call_error",
-					endpoint,
-					method: options.method || "GET",
-					duration_ms,
-					error: error instanceof Error ? error.message : String(error),
-					timestamp: new Date().toISOString(),
-				}),
-			);
+			const durationMs = Date.now() - startTime;
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
 
-			throw error;
+			throw new Error(`Request failed: ${errorMessage}`);
 		}
 	}
 }

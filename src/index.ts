@@ -1,13 +1,13 @@
 // Import actual tool implementations
-import { getMe, updateMe } from "./tools/user.js";
+import { get_me, update_me } from "./tools/user.js";
 import { createCard, getCard, updateCard, deleteCard } from "./tools/cards.js";
 import { getProject, listProjects } from "./tools/projects.js";
 import {
-	createBoard,
-	getBoard,
-	listBoards,
-	updateBoard,
-	deleteBoard,
+	create_board,
+	get_board,
+	list_boards,
+	update_board,
+	delete_board,
 } from "./tools/boards.js";
 
 /**
@@ -17,7 +17,7 @@ function createMCPHandler(authToken: string) {
 	return async (request: Request): Promise<Response> => {
 		try {
 			// Parse the JSON-RPC request
-			const jsonRpcRequest = await request.json();
+			const jsonRpcRequest = (await request.json()) as any;
 			const { method, params, id } = jsonRpcRequest;
 
 			// Handle different MCP methods
@@ -257,7 +257,7 @@ function createMCPHandler(authToken: string) {
 					};
 					break;
 
-				case "tools/call":
+				case "tools/call": {
 					const toolName = params?.name;
 					const toolArgs = params?.arguments || {};
 
@@ -266,10 +266,10 @@ function createMCPHandler(authToken: string) {
 
 						switch (toolName) {
 							case "get_me":
-								toolResult = await getMe(toolArgs, authToken);
+								toolResult = await get_me(toolArgs, authToken);
 								break;
 							case "update_me":
-								toolResult = await updateMe(toolArgs, authToken);
+								toolResult = await update_me(toolArgs, authToken);
 								break;
 							case "create_card":
 								toolResult = await createCard(toolArgs, authToken);
@@ -290,19 +290,19 @@ function createMCPHandler(authToken: string) {
 								toolResult = await getProject(toolArgs, authToken);
 								break;
 							case "create_board":
-								toolResult = await createBoard(toolArgs, authToken);
+								toolResult = await create_board(toolArgs, authToken);
 								break;
 							case "get_board":
-								toolResult = await getBoard(toolArgs, authToken);
+								toolResult = await get_board(toolArgs, authToken);
 								break;
 							case "list_boards":
-								toolResult = await listBoards(toolArgs, authToken);
+								toolResult = await list_boards(toolArgs, authToken);
 								break;
 							case "update_board":
-								toolResult = await updateBoard(toolArgs, authToken);
+								toolResult = await update_board(toolArgs, authToken);
 								break;
 							case "delete_board":
-								toolResult = await deleteBoard(toolArgs, authToken);
+								toolResult = await delete_board(toolArgs, authToken);
 								break;
 							default:
 								responseData = {
@@ -335,6 +335,7 @@ function createMCPHandler(authToken: string) {
 						};
 					}
 					break;
+				}
 
 				default:
 					responseData = {
