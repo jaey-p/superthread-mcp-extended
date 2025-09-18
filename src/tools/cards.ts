@@ -62,6 +62,32 @@ export const deleteCardSchema = z.object({
 	card_id: z.string().describe("The unique identifier for the card to delete"),
 });
 
+export const duplicateCardSchema = z.object({
+	team_id: z.string().describe("Team/workspace ID"),
+	card_id: z.string().describe("Card ID to duplicate"),
+	title: z.string().optional().describe("Title for duplicated card"),
+});
+
+export const getCardsAssignedToUserSchema = z.object({
+	team_id: z.string().describe("Team/workspace ID"),
+	user_id: z.string().describe("User ID to get assigned cards for"),
+	project_id: z.string().optional().describe("Filter by project ID"),
+});
+
+export const addRelatedCardSchema = z.object({
+	team_id: z.string().describe("Team/workspace ID"),
+	card_id: z.string().describe("Card ID to add relation to"),
+	related_card_id: z.string().describe("Related card ID"),
+	relation_type: z
+		.enum(["blocks", "blocked_by", "relates_to"])
+		.describe("Type of relationship"),
+});
+
+export const archiveCardSchema = z.object({
+	team_id: z.string().describe("Team/workspace ID"),
+	card_id: z.string().describe("Card ID to archive"),
+});
+
 async function handleToolExecution(toolFn: (...args: any[]) => Promise<any>) {
 	const result = await toolFn();
 	if (typeof result === "object" && result !== null) {
@@ -126,6 +152,56 @@ export async function deleteCard(
 	return { success: true, message: "Card deleted successfully." };
 }
 
+export async function duplicateCard(
+	args: z.infer<typeof duplicateCardSchema>,
+	token: string,
+) {
+	const { team_id, card_id, ...payload } = args;
+	return apiClient.makeRequest(
+		`/${team_id}/cards/${card_id}/duplicate`,
+		token,
+		{
+			method: "POST",
+			body: JSON.stringify(payload),
+		},
+	);
+}
+
+export async function getCardsAssignedToUser(
+	args: z.infer<typeof getCardsAssignedToUserSchema>,
+	token: string,
+) {
+	const { team_id, user_id, project_id } = args;
+	const payload = { user_id, ...(project_id && { project_id }) };
+	return apiClient.makeRequest(`/${team_id}/cards/assigned`, token, {
+		method: "POST",
+		body: JSON.stringify(payload),
+	});
+}
+
+export async function addRelatedCard(
+	args: z.infer<typeof addRelatedCardSchema>,
+	token: string,
+) {
+	const { team_id, card_id, related_card_id, relation_type } = args;
+	const payload = { related_card_id, relation_type };
+	return apiClient.makeRequest(`/${team_id}/cards/${card_id}/related`, token, {
+		method: "POST",
+		body: JSON.stringify(payload),
+	});
+}
+
+export async function archiveCard(
+	args: z.infer<typeof archiveCardSchema>,
+	token: string,
+) {
+	const { team_id, card_id } = args;
+	return apiClient.makeRequest(`/${team_id}/cards/${card_id}`, token, {
+		method: "PATCH",
+		body: JSON.stringify({ archived: true }),
+	});
+}
+
 export function registerCardTools(server: McpServer, authToken: string) {
 	server.registerTool(
 		"create_card",
@@ -167,5 +243,48 @@ export function registerCardTools(server: McpServer, authToken: string) {
 			inputSchema: deleteCardSchema.shape,
 		},
 		(args) => handleToolExecution(() => deleteCard(args as any, authToken)),
+	);
+
+	server.registerTool(
+		"duplicate_card",
+		{
+			title: "Duplicate a card",
+			description: "Creates a duplicate of an existing card.",
+			inputSchema: duplicateCardSchema.shape,
+		},
+		(args) => handleToolExecution(() => duplicateCard(args as any, authToken)),
+	);
+
+	server.registerTool(
+		"get_cards_assigned_to_user",
+		{
+			title: "Get cards assigned to user",
+			description:
+				"Fetches cards assigned to a specific user, optionally filtered by project.",
+			inputSchema: getCardsAssignedToUserSchema.shape,
+		},
+		(args) =>
+			handleToolExecution(() => getCardsAssignedToUser(args as any, authToken)),
+	);
+
+	server.registerTool(
+		"add_related_card",
+		{
+			title: "Add related card",
+			description:
+				"Creates a relationship between two cards (blocks, blocked by, or relates to).",
+			inputSchema: addRelatedCardSchema.shape,
+		},
+		(args) => handleToolExecution(() => addRelatedCard(args as any, authToken)),
+	);
+
+	server.registerTool(
+		"archive_card",
+		{
+			title: "Archive a card",
+			description: "Archives a specific card by its ID.",
+			inputSchema: archiveCardSchema.shape,
+		},
+		(args) => handleToolExecution(() => archiveCard(args as any, authToken)),
 	);
 }
