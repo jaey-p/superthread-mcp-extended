@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { search } from "../lib/search";
-import { getUserFromToken, getUserTeams } from "./user";
-import { apiClient } from "../lib/api-client";
-import type { Card } from "../types/cards";
-import type { CardSearchResult } from "../types/search";
+import { search } from "../lib/search.js";
+import { getUserFromToken, getUserTeams } from "./user.js";
+import { apiClient } from "../lib/api-client.js";
+import type { Card } from "../types/cards.js";
+import type { CardSearchResult } from "../types/search.js";
 
 export const createCardSchema = {
 	team_id: z

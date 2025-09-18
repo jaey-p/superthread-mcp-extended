@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { search } from "../lib/search.js";
 import { apiClient } from "../lib/api-client.js";
 import { getUserFromToken, getUserTeams } from "./user.js";
-import type { ProjectFromSearch } from "../types/projects";
+import type { ProjectFromSearch } from "../types/projects.js";
 
 export const listProjectsSchema = {
 	team_id: z

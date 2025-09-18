@@ -1,7 +1,7 @@
 // Import actual tool implementations
-import { getMe } from "./tools/user.js";
+import { getMe, updateMe } from "./tools/user.js";
 import { createCard, getCard, updateCard, deleteCard } from "./tools/cards.js";
-import { getProject } from "./tools/projects.js";
+import { getProject, listProjects } from "./tools/projects.js";
 import {
 	createBoard,
 	getBoard,
@@ -57,6 +57,30 @@ function createMCPHandler(authToken: string) {
 									},
 								},
 								{
+									name: "update_me",
+									description: "Update current user profile information",
+									inputSchema: {
+										type: "object",
+										properties: {
+											first_name: { type: "string", description: "First name" },
+											last_name: { type: "string", description: "Last name" },
+											display_name: {
+												type: "string",
+												description: "Display name",
+											},
+											profile_image: {
+												type: "string",
+												description: "Profile image URL",
+											},
+											timezone_id: {
+												type: "string",
+												description: "Timezone ID",
+											},
+											locale: { type: "string", description: "Locale" },
+										},
+									},
+								},
+								{
 									name: "create_card",
 									description:
 										"Create a new card in a specified team and board",
@@ -66,9 +90,10 @@ function createMCPHandler(authToken: string) {
 											title: { type: "string", description: "Card title" },
 											content: { type: "string", description: "Card content" },
 											team_id: { type: "string", description: "Team ID" },
+											list_id: { type: "string", description: "List ID" },
 											board_id: { type: "string", description: "Board ID" },
 										},
-										required: ["title", "team_id", "board_id"],
+										required: ["title", "team_id", "list_id"],
 									},
 								},
 								{
@@ -77,9 +102,69 @@ function createMCPHandler(authToken: string) {
 									inputSchema: {
 										type: "object",
 										properties: {
+											query: {
+												type: "string",
+												description: "Card title or identifier to search for",
+											},
+										},
+										required: ["query"],
+									},
+								},
+								{
+									name: "update_card",
+									description: "Update a card's attributes",
+									inputSchema: {
+										type: "object",
+										properties: {
+											team_id: { type: "string", description: "Team ID" },
+											card_id: { type: "string", description: "Card ID" },
+											title: { type: "string", description: "Card title" },
+											content: { type: "string", description: "Card content" },
+										},
+										required: ["team_id", "card_id"],
+									},
+								},
+								{
+									name: "delete_card",
+									description: "Delete a specific card",
+									inputSchema: {
+										type: "object",
+										properties: {
+											team_id: { type: "string", description: "Team ID" },
 											card_id: { type: "string", description: "Card ID" },
 										},
-										required: ["card_id"],
+										required: ["team_id", "card_id"],
+									},
+								},
+								{
+									name: "list_projects",
+									description: "List all projects in a team",
+									inputSchema: {
+										type: "object",
+										properties: {
+											team_id: { type: "string", description: "Team ID" },
+										},
+										required: ["team_id"],
+									},
+								},
+								{
+									name: "get_project",
+									description:
+										"Get detailed information about a specific project",
+									inputSchema: {
+										type: "object",
+										properties: {
+											query: {
+												type: "string",
+												description:
+													"Project name or description to search for",
+											},
+											exact_match: {
+												type: "boolean",
+												description: "Whether to return only exact matches",
+											},
+										},
+										required: ["query"],
 									},
 								},
 								{
@@ -90,8 +175,30 @@ function createMCPHandler(authToken: string) {
 										properties: {
 											title: { type: "string", description: "Board title" },
 											team_id: { type: "string", description: "Team ID" },
+											project_id: { type: "string", description: "Project ID" },
+											content: {
+												type: "string",
+												description: "Board description",
+											},
 										},
 										required: ["title", "team_id"],
+									},
+								},
+								{
+									name: "update_board",
+									description: "Update an existing board",
+									inputSchema: {
+										type: "object",
+										properties: {
+											team_id: { type: "string", description: "Team ID" },
+											board_id: { type: "string", description: "Board ID" },
+											title: { type: "string", description: "Board title" },
+											content: {
+												type: "string",
+												description: "Board description",
+											},
+										},
+										required: ["team_id", "board_id"],
 									},
 								},
 								{
@@ -101,8 +208,47 @@ function createMCPHandler(authToken: string) {
 										type: "object",
 										properties: {
 											team_id: { type: "string", description: "Team ID" },
+											project_id: {
+												type: "string",
+												description: "Project ID to filter by",
+											},
+											bookmarked: {
+												type: "boolean",
+												description: "Filter for bookmarked boards",
+											},
+											archived: {
+												type: "boolean",
+												description: "Filter for archived boards",
+											},
 										},
 										required: ["team_id"],
+									},
+								},
+								{
+									name: "get_board",
+									description:
+										"Get detailed information about a specific board",
+									inputSchema: {
+										type: "object",
+										properties: {
+											query: {
+												type: "string",
+												description: "Board title or identifier to search for",
+											},
+										},
+										required: ["query"],
+									},
+								},
+								{
+									name: "delete_board",
+									description: "Delete a specific board",
+									inputSchema: {
+										type: "object",
+										properties: {
+											team_id: { type: "string", description: "Team ID" },
+											board_id: { type: "string", description: "Board ID" },
+										},
+										required: ["team_id", "board_id"],
 									},
 								},
 							],
@@ -122,6 +268,9 @@ function createMCPHandler(authToken: string) {
 							case "get_me":
 								toolResult = await getMe(toolArgs, authToken);
 								break;
+							case "update_me":
+								toolResult = await updateMe(toolArgs, authToken);
+								break;
 							case "create_card":
 								toolResult = await createCard(toolArgs, authToken);
 								break;
@@ -133,6 +282,9 @@ function createMCPHandler(authToken: string) {
 								break;
 							case "delete_card":
 								toolResult = await deleteCard(toolArgs, authToken);
+								break;
+							case "list_projects":
+								toolResult = await listProjects(toolArgs, authToken);
 								break;
 							case "get_project":
 								toolResult = await getProject(toolArgs, authToken);
