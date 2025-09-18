@@ -173,6 +173,13 @@ const deleteBoardSchema = z.object({
 	board_id: z.string().describe("The ID of the board to delete."),
 });
 
+const duplicateBoardSchema = z.object({
+	team_id: z.string().describe("Team/workspace ID"),
+	board_id: z.string().describe("Board ID to duplicate"),
+	title: z.string().optional().describe("Title for duplicated board"),
+	project_id: z.string().optional().describe("Project ID for duplicated board"),
+});
+
 export async function delete_board(
 	args: z.infer<typeof deleteBoardSchema>,
 	token: string,
@@ -185,6 +192,21 @@ export async function delete_board(
 		},
 	);
 	return { success: true };
+}
+
+export async function duplicate_board(
+	args: z.infer<typeof duplicateBoardSchema>,
+	token: string,
+): Promise<Board> {
+	const { team_id, board_id, ...payload } = args;
+	return await apiClient.makeRequest(
+		`/${team_id}/boards/${board_id}/duplicate`,
+		token,
+		{
+			method: "POST",
+			body: JSON.stringify(payload),
+		},
+	);
 }
 
 export function registerBoardTools(server: McpServer, authToken: string) {
@@ -260,6 +282,21 @@ export function registerBoardTools(server: McpServer, authToken: string) {
 		},
 		async (args) => {
 			const result = await delete_board(args, authToken);
+			return {
+				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+			};
+		},
+	);
+
+	server.registerTool(
+		"duplicate_board",
+		{
+			title: "Duplicate Board",
+			description: "Creates a duplicate of an existing board.",
+			inputSchema: duplicateBoardSchema.shape,
+		},
+		async (args) => {
+			const result = await duplicate_board(args, authToken);
 			return {
 				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 			};
