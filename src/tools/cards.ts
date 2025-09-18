@@ -48,7 +48,7 @@ export async function createCard(args: any, token: string) {
 
 	try {
 		const typedArgs = args as z.infer<z.ZodObject<typeof createCardSchema>>;
-		const { team_id, board_id, sprint_id, ...cardData } = typedArgs;
+		const { team_id, board_id, sprint_id, list_id, ...cardData } = typedArgs;
 
 		if (!board_id && !sprint_id) {
 			throw new Error("Either board_id or sprint_id must be provided");
@@ -56,9 +56,12 @@ export async function createCard(args: any, token: string) {
 
 		const payload = {
 			...cardData,
+			list_id,
 			...(board_id && { board_id }),
 			...(sprint_id && { sprint_id }),
 		};
+
+		console.log("CREATE_CARD_PAYLOAD:", JSON.stringify(payload, null, 2));
 
 		const card = await apiClient.makeRequest(`/${team_id}/cards`, token, {
 			method: "POST",
