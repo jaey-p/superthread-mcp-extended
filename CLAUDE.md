@@ -21,7 +21,6 @@ This is a **Superthread MCP Server** built on **Cloudflare Workers** that provid
 
 - **`src/index.ts`** - Main entry point that sets up OAuthProvider with MCP server integration and handles SUPERTHREAD_PAT secret
 - **`src/server.ts`** - Creates and configures the MCP server, registers all tool categories
-- **`src/app.ts`** - Hono-based web application handling OAuth authorization flow (`/`, `/authorize`, `/approve`, `/tools`)
 - **`src/tools/`** - MCP tool implementations organized by category:
   - `user.ts` - User management (get_me, update_me)
   - `cards.ts` - Card management (create, get, update, delete)
@@ -31,7 +30,6 @@ This is a **Superthread MCP Server** built on **Cloudflare Workers** that provid
   - `api-client.ts` - Superthread API client
   - `search.ts` - Search utilities
 - **`src/types/`** - TypeScript type definitions for all Superthread entities
-- **`src/utils.ts`** - HTML rendering utilities for OAuth UI components
 
 ### Key Technologies
 
@@ -60,11 +58,11 @@ This is a **Superthread MCP Server** built on **Cloudflare Workers** that provid
 4. Start dev server: `npm run dev`
 5. Access at `http://localhost:8787/`
 6. Test MCP with inspector: `npx @modelcontextprotocol/inspector` → SSE transport → `http://localhost:8787/sse`
-7. View available tools: `http://localhost:8787/tools`
 
 ### Deployment Requirements
 
 Before deployment, ensure `wrangler.jsonc` is properly configured:
+
 - Update OAUTH_KV namespace ID (replace `<ADD YOUR KV NAMESPACEID HERE>`)
 - Ensure SUPERTHREAD_PAT secret is set
 - Run `npm run deploy`
@@ -74,6 +72,7 @@ Before deployment, ensure `wrangler.jsonc` is properly configured:
 The server exposes MCP tools at `/sse` endpoint using Server-Sent Events transport. OAuth flow protects access with configurable scopes (read_profile, read_data, write_data). The demo accepts any email/password for authentication.
 
 **Available Tool Categories:**
+
 - **User Management** - Get and update user profile information
 - **Card Management** - Full CRUD operations for Superthread cards
 - **Project Management** - Read access to projects

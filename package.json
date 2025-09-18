@@ -14,7 +14,6 @@
 		"test": "curl -f http://localhost:8787/health || echo 'Server not running'"
 	},
 	"dependencies": {
-		"@cloudflare/workers-oauth-provider": "^0.0.6",
 		"@modelcontextprotocol/sdk": "^1.17.5",
 		"agents": "^0.0.109",
 		"hono": "^4.8.12",

@@ -3,9 +3,7 @@
 	"name": "superthread",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-10",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
+	"compatibility_flags": ["nodejs_compat"],
 	"kv_namespaces": [
 		{
 			"binding": "superthread",
@@ -13,10 +11,27 @@
 		}
 	],
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		"head_sampling_rate": 1
 	},
 	"assets": {
 		"directory": "./static/",
 		"binding": "ASSETS"
+	},
+	"env": {
+		"staging": {
+			"name": "superthread-staging",
+			"observability": {
+				"enabled": true,
+				"head_sampling_rate": 1
+			}
+		},
+		"production": {
+			"name": "superthread-production",
+			"observability": {
+				"enabled": true,
+				"head_sampling_rate": 0.1
+			}
+		}
 	}
 }

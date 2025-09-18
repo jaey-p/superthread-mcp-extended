@@ -1,110 +1,193 @@
-import { z } from 'zod'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { search } from '../lib/search.js'
-import { apiClient } from '../lib/api-client.js'
-import { getUserFromToken, getUserTeams } from './user.js'
-import type { ProjectFromSearch } from '../types/projects'
+import { z } from "zod";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { search } from "../lib/search.js";
+import { apiClient } from "../lib/api-client.js";
+import { getUserFromToken, getUserTeams } from "./user.js";
+import type { ProjectFromSearch } from "../types/projects";
 
 export const listProjectsSchema = {
-  team_id: z
-    .string()
-    .describe(
-      'Use the get_me tool first to get the team IDs available. If needed, confirm with the user which team they want to use.'
-    ),
-}
+	team_id: z
+		.string()
+		.describe(
+			"Use the get_me tool first to get the team IDs available. If needed, confirm with the user which team they want to use.",
+		),
+};
 
 export async function listProjects(args: any, token: string) {
-  const { team_id } = args as z.infer<z.ZodObject<typeof listProjectsSchema>>
+	const startTime = Date.now();
 
-  const projects = await apiClient.makeRequest(`/${team_id}/epics`, token)
+	console.log(
+		JSON.stringify({
+			event: "tool_call_start",
+			tool_name: "list_projects",
+			timestamp: new Date().toISOString(),
+		}),
+	);
 
-  return {
-    content: [
-      {
-        type: 'text' as const,
-        text: JSON.stringify(projects, null, 2),
-      },
-    ],
-  }
+	try {
+		const { team_id } = args as z.infer<z.ZodObject<typeof listProjectsSchema>>;
+
+		const projects = await apiClient.makeRequest(`/${team_id}/epics`, token);
+
+		const duration_ms = Date.now() - startTime;
+
+		console.log(
+			JSON.stringify({
+				event: "tool_call_success",
+				tool_name: "list_projects",
+				duration_ms,
+				team_id,
+				status: "success",
+				timestamp: new Date().toISOString(),
+			}),
+		);
+
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: JSON.stringify(projects, null, 2),
+				},
+			],
+		};
+	} catch (error) {
+		const duration_ms = Date.now() - startTime;
+
+		console.log(
+			JSON.stringify({
+				event: "tool_call_error",
+				tool_name: "list_projects",
+				duration_ms,
+				status: "error",
+				error: error instanceof Error ? error.message : String(error),
+				timestamp: new Date().toISOString(),
+			}),
+		);
+
+		throw error;
+	}
 }
 
 export const getProjectSchema = {
-  query: z.string().describe('Search query for the project name or description'),
-  exact_match: z
-    .boolean()
-    .optional()
-    .describe('Whether to return only exact matches (default: false)'),
-}
+	query: z
+		.string()
+		.describe("Search query for the project name or description"),
+	exact_match: z
+		.boolean()
+		.optional()
+		.describe("Whether to return only exact matches (default: false)"),
+};
 
 export async function getProject(args: any, token: string) {
-  const user = await getUserFromToken(token)
-  const teamIds = await getUserTeams(user)
+	const startTime = Date.now();
 
-  const allProjects: ProjectFromSearch[] = []
-  const seenIds = new Set<string>()
+	console.log(
+		JSON.stringify({
+			event: "tool_call_start",
+			tool_name: "get_project",
+			timestamp: new Date().toISOString(),
+		}),
+	);
 
-  for (const teamId of teamIds) {
-    try {
-      const searchResults = await search(teamId, token, {
-        query: args.query,
-      })
+	try {
+		const user = await getUserFromToken(token);
+		const teamIds = await getUserTeams(user);
 
-      if (searchResults?.epics) {
-        for (const project of searchResults.epics) {
-          if (!seenIds.has(project.id)) {
-            seenIds.add(project.id)
+		const allProjects: ProjectFromSearch[] = [];
+		const seenIds = new Set<string>();
 
-            if (args.exact_match) {
-              if (project.title?.toLowerCase() === args.query.toLowerCase()) {
-                allProjects.push(project)
-              }
-            } else {
-              allProjects.push(project)
-            }
-          }
-        }
-      }
-    } catch (error) {
-      continue
-    }
-  }
+		for (const teamId of teamIds) {
+			try {
+				const searchResults = await search(teamId, token, {
+					query: args.query,
+				});
 
-  return {
-    content: [
-      {
-        type: 'text' as const,
-        text: JSON.stringify(
-          {
-            query: args.query,
-            found_projects: allProjects.length,
-            projects: allProjects,
-          },
-          null,
-          2
-        ),
-      },
-    ],
-  }
+				if (searchResults?.epics) {
+					for (const project of searchResults.epics) {
+						if (!seenIds.has(project.id)) {
+							seenIds.add(project.id);
+
+							if (args.exact_match) {
+								if (project.title?.toLowerCase() === args.query.toLowerCase()) {
+									allProjects.push(project);
+								}
+							} else {
+								allProjects.push(project);
+							}
+						}
+					}
+				}
+			} catch (error) {
+				continue;
+			}
+		}
+
+		const duration_ms = Date.now() - startTime;
+
+		console.log(
+			JSON.stringify({
+				event: "tool_call_success",
+				tool_name: "get_project",
+				duration_ms,
+				user_id: user?.user?.id,
+				projects_found: allProjects.length,
+				status: "success",
+				timestamp: new Date().toISOString(),
+			}),
+		);
+
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: JSON.stringify(
+						{
+							query: args.query,
+							found_projects: allProjects.length,
+							projects: allProjects,
+						},
+						null,
+						2,
+					),
+				},
+			],
+		};
+	} catch (error) {
+		const duration_ms = Date.now() - startTime;
+
+		console.log(
+			JSON.stringify({
+				event: "tool_call_error",
+				tool_name: "get_project",
+				duration_ms,
+				status: "error",
+				error: error instanceof Error ? error.message : String(error),
+				timestamp: new Date().toISOString(),
+			}),
+		);
+
+		throw error;
+	}
 }
 
 export function registerProjectTools(server: McpServer, authToken: string) {
-  server.registerTool(
-    'list_projects',
-    {
-      title: 'List all projects (epics) in a team',
-      description: 'Fetches a list of all projects (epics) in a team',
-      inputSchema: listProjectsSchema,
-    },
-    (args) => listProjects(args, authToken)
-  )
+	server.registerTool(
+		"list_projects",
+		{
+			title: "List all projects (epics) in a team",
+			description: "Fetches a list of all projects (epics) in a team",
+			inputSchema: listProjectsSchema,
+		},
+		(args) => listProjects(args, authToken),
+	);
 
-  server.registerTool(
-    'get_project',
-    {
-      title: 'Retrieve all details about a project (epic)',
-      description: 'Fetches detailed information about a specific project',
-      inputSchema: getProjectSchema,
-    },
-    (args) => getProject(args, authToken)
-  )
+	server.registerTool(
+		"get_project",
+		{
+			title: "Retrieve all details about a project (epic)",
+			description: "Fetches detailed information about a specific project",
+			inputSchema: getProjectSchema,
+		},
+		(args) => getProject(args, authToken),
+	);
 }
