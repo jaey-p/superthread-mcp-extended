@@ -1,11 +1,11 @@
 // Import actual tool implementations
-import { get_me, update_me } from "./tools/user.js";
+import { get_my_account, update_my_account } from "./tools/user.js";
 import { createCard, getCard, updateCard, deleteCard } from "./tools/cards.js";
 import { getProject, listProjects } from "./tools/projects.js";
 import {
 	create_board,
 	get_board,
-	list_boards,
+	get_boards,
 	update_board,
 	delete_board,
 } from "./tools/boards.js";
@@ -49,7 +49,7 @@ function createMCPHandler(authToken: string) {
 						result: {
 							tools: [
 								{
-									name: "get_me",
+									name: "get_my_account",
 									description: "Get current user information",
 									inputSchema: {
 										type: "object",
@@ -57,7 +57,7 @@ function createMCPHandler(authToken: string) {
 									},
 								},
 								{
-									name: "update_me",
+									name: "update_my_account",
 									description: "Update current user profile information",
 									inputSchema: {
 										type: "object",
@@ -202,7 +202,7 @@ function createMCPHandler(authToken: string) {
 									},
 								},
 								{
-									name: "list_boards",
+									name: "get_boards",
 									description: "List all boards in a team",
 									inputSchema: {
 										type: "object",
@@ -265,11 +265,11 @@ function createMCPHandler(authToken: string) {
 						let toolResult: any;
 
 						switch (toolName) {
-							case "get_me":
-								toolResult = await get_me(toolArgs, authToken);
+							case "get_my_account":
+								toolResult = await get_my_account(toolArgs, authToken);
 								break;
-							case "update_me":
-								toolResult = await update_me(toolArgs, authToken);
+							case "update_my_account":
+								toolResult = await update_my_account(toolArgs, authToken);
 								break;
 							case "create_card":
 								toolResult = await createCard(toolArgs, authToken);
@@ -295,8 +295,8 @@ function createMCPHandler(authToken: string) {
 							case "get_board":
 								toolResult = await get_board(toolArgs, authToken);
 								break;
-							case "list_boards":
-								toolResult = await list_boards(toolArgs, authToken);
+							case "get_boards":
+								toolResult = await get_boards(toolArgs, authToken);
 								break;
 							case "update_board":
 								toolResult = await update_board(toolArgs, authToken);

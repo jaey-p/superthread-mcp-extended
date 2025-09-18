@@ -88,7 +88,7 @@ export async function update_board(
 	});
 }
 
-const listBoardsSchema = z.object({
+const getBoardsSchema = z.object({
 	team_id: z.string().describe("The ID of the team to list boards from."),
 	project_id: z
 		.string()
@@ -98,8 +98,8 @@ const listBoardsSchema = z.object({
 	archived: z.boolean().optional().describe("Filter for archived boards."),
 });
 
-export async function list_boards(
-	args: z.infer<typeof listBoardsSchema>,
+export async function get_boards(
+	args: z.infer<typeof getBoardsSchema>,
 	token: string,
 ): Promise<Board[]> {
 	const { team_id, ...queryParams } = args;
@@ -220,15 +220,15 @@ export function registerBoardTools(server: McpServer, authToken: string) {
 	);
 
 	server.registerTool(
-		"list_boards",
+		"get_boards",
 		{
 			title: "List Boards",
 			description:
 				"Lists boards for a team, filtered by project, bookmark status, or archived status. At least one filter is required.",
-			inputSchema: listBoardsSchema.shape,
+			inputSchema: getBoardsSchema.shape,
 		},
 		async (args) => {
-			const result = await list_boards(args, authToken);
+			const result = await get_boards(args, authToken);
 			return {
 				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 			};

@@ -3,10 +3,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiClient } from "../lib/api-client.js";
 
 // Schema for getting the current user's information. No input needed.
-export const getMeSchema = z.object({});
+export const getMyAccountSchema = z.object({});
 
 // Schema for updating the current user's information. All fields are optional.
-export const updateMeSchema = z.object({
+export const updateMyAccountSchema = z.object({
 	first_name: z.string().optional().describe("The user's first name."),
 	last_name: z.string().optional().describe("The user's last name."),
 	display_name: z.string().optional().describe("The user's display name."),
@@ -57,8 +57,8 @@ export const getTeamMembersSchema = z.object({
  * @param token - The authentication token.
  * @returns The user's information.
  */
-export async function get_me(
-	_args: z.infer<typeof getMeSchema>,
+export async function get_my_account(
+	_args: z.infer<typeof getMyAccountSchema>,
 	token: string,
 ) {
 	// The API docs specify /v1/users/{user_id}, but a "me" endpoint is standard for PAT-based auth.
@@ -81,8 +81,8 @@ export async function get_me(
  * @param token - The authentication token.
  * @returns The updated user's information.
  */
-export async function update_me(
-	args: z.infer<typeof updateMeSchema>,
+export async function update_my_account(
+	args: z.infer<typeof updateMyAccountSchema>,
 	token: string,
 ) {
 	const response = await apiClient.makeRequest("/users/me", token, {
@@ -140,25 +140,25 @@ export async function getUserTeams(user: any) {
 
 export function registerUserTools(server: McpServer, authToken: string) {
 	server.registerTool(
-		"get_me",
+		"get_my_account",
 		{
 			title: "Get Current User",
 			description:
 				"Fetches the profile information for the currently authenticated user.",
-			inputSchema: getMeSchema.shape,
+			inputSchema: getMyAccountSchema.shape,
 		},
-		(args) => get_me(args, authToken),
+		(args) => get_my_account(args, authToken),
 	);
 
 	server.registerTool(
-		"update_me",
+		"update_my_account",
 		{
 			title: "Update Current User",
 			description:
 				"Updates the profile information for the currently authenticated user.",
-			inputSchema: updateMeSchema.shape,
+			inputSchema: updateMyAccountSchema.shape,
 		},
-		(args) => update_me(args, authToken),
+		(args) => update_my_account(args, authToken),
 	);
 
 	server.registerTool(
