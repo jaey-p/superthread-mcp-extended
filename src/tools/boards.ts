@@ -11,7 +11,7 @@ export const createBoardSchema = {
 		.describe(
 			"Use the get_me tool first to get the team IDs available. If needed, confirm with the user which team they want to use.",
 		),
-	title: z.string().describe("Board title"),
+	title: z.string().describe("Board title (required)"),
 	project_id: z
 		.string()
 		.describe(
@@ -20,6 +20,8 @@ export const createBoardSchema = {
 	content: z.string().optional().describe("Board description/content"),
 	icon: z.string().optional().describe("Board icon"),
 	color: z.string().optional().describe("Board color"),
+	image_urls: z.string().optional().describe("Image URLs as string"),
+	thumbnail_url: z.string().optional().describe("Thumbnail image URL"),
 	layout: z.string().optional().describe('Board layout (defaults to "board")'),
 	lists: z
 		.array(
@@ -66,7 +68,7 @@ export async function createBoard(args: any, token: string) {
 			...boardData,
 		};
 
-		const board = await apiClient.makeRequest(`/${team_id}/boards`, token, {
+		const board = await apiClient.makeRequest(`/v1/${team_id}/boards`, token, {
 			method: "POST",
 			body: JSON.stringify(payload),
 		});
@@ -203,12 +205,12 @@ export async function updateBoard(args: any, token: string) {
 	}
 }
 
-export const listBoardsSchema = {
+export const listBoardsSchema = z.object({
 	team_id: z.string().describe("Use the getMe tool to get the team ID"),
 	project_id: z.string().optional().describe("Project ID to filter boards by"),
 	bookmarked: z.boolean().optional().describe("Filter for bookmarked boards"),
 	archived: z.boolean().optional().describe("Filter for archived boards"),
-};
+});
 
 export async function listBoards(args: any, token: string) {
 	const startTime = Date.now();
@@ -288,9 +290,9 @@ export async function listBoards(args: any, token: string) {
 	}
 }
 
-export const getBoardSchema = z.object({
+export const getBoardSchema = {
 	query: z.string().describe("Board title or identifier to search for"),
-});
+};
 
 /**
  * Fetches detailed information about a specific board by its title or ID (minus the prefix)
@@ -307,7 +309,7 @@ export async function getBoard(args: any, token: string) {
 	);
 
 	try {
-		const { query } = args as z.infer<typeof getBoardSchema>;
+		const { query } = args as z.infer<z.ZodObject<typeof getBoardSchema>>;
 
 		const user = await getUserFromToken(token);
 		const teamIds = await getUserTeams(user);
@@ -393,7 +395,7 @@ export async function getBoard(args: any, token: string) {
 	}
 }
 
-export const deleteBoardSchema = z.object({
+export const deleteBoardSchema = {
 	team_id: z
 		.string()
 		.describe(
@@ -402,7 +404,7 @@ export const deleteBoardSchema = z.object({
 	board_id: z
 		.string()
 		.describe("Use the get_board tool to retrieve the board ID"),
-});
+};
 
 export async function deleteBoard(args: any, token: string) {
 	const startTime = Date.now();
