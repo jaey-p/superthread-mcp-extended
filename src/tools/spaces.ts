@@ -63,7 +63,7 @@ export async function create_space(
 ) {
 	// TODO: Implement create_space API call
 	// Should call: POST Create a space
-	// API endpoint: `/${team_id}/spaces` with name, description, and privacy in body
+	// API endpoint: `/${team_id}/projects` with name, description, and privacy in body
 
 	return {
 		content: [
@@ -96,7 +96,7 @@ export async function update_space(
 ) {
 	// TODO: Implement update_space API call
 	// Should call: PATCH Update a space
-	// API endpoint: `/${team_id}/spaces/${space_id}` with name, description, and privacy in body
+	// API endpoint: `/${team_id}/projects/${space_id}` with name, description, and privacy in body
 
 	return {
 		content: [
@@ -129,7 +129,7 @@ export async function get_space(
 ) {
 	// TODO: Implement get_space API call
 	// Should call: GET Get a space
-	// API endpoint: `/${team_id}/spaces/${space_id}`
+	// API endpoint: `/${team_id}/projects/${space_id}`
 
 	return {
 		content: [
@@ -160,27 +160,25 @@ export async function get_spaces(
 	args: z.infer<typeof getSpacesSchema>,
 	token: string,
 ) {
-	// TODO: Implement get_spaces API call
-	// Should call: GET Get spaces
-	// API endpoint: `/${team_id}/spaces` with optional cursor query parameter
-
-	return {
-		content: [
-			{
-				type: "text" as const,
-				text: JSON.stringify(
-					{
-						error: "Not implemented",
-						message:
-							"get_spaces function is a placeholder and not yet implemented",
-						requested_args: args,
-					},
-					null,
-					2,
-				),
-			},
-		],
-	};
+	try {
+		const { team_id, cursor } = args;
+		const queryParams = cursor ? `?cursor=${cursor}` : "";
+		const spaces = await apiClient.makeRequest(
+			`/${team_id}/projects${queryParams}`,
+			token,
+		);
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: JSON.stringify(spaces, null, 2),
+				},
+			],
+		};
+	} catch (error) {
+		console.error("Error getting spaces:", error);
+		throw new Error("Failed to get spaces.");
+	}
 }
 
 /**
@@ -195,7 +193,7 @@ export async function add_member_to_space(
 ) {
 	// TODO: Implement add_member_to_space API call
 	// Should call: POST Add a member to a space
-	// API endpoint: `/${team_id}/spaces/${space_id}/members` with user_id and role in body
+	// API endpoint: `/${team_id}/projects/${space_id}/members` with user_id and role in body
 
 	return {
 		content: [
