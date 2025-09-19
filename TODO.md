@@ -1,1 +1,4 @@
-- [x] fix-create-card-list-id
+- need to attach available list id for board being accessed in the mcp response, so claude doesnt make a new list. 
+- double check the data being passed to claude and if it's adequete.
+- might need to add two calls when one mcp is called.
+- might need to enable some sort of caching to avoid making too many calls. (huge maybe)
