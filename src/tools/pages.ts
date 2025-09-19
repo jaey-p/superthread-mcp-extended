@@ -31,13 +31,6 @@ export const getPageSchema = z.object({
 	page_id: z.string().describe("Page ID to retrieve"),
 });
 
-// Schema for duplicating a page
-export const duplicatePageSchema = z.object({
-	team_id: z.string().describe("Team/workspace ID"),
-	page_id: z.string().describe("Page ID to duplicate"),
-	title: z.string().optional().describe("Title for the duplicated page"),
-});
-
 // Schema for getting pages
 export const getPagesSchema = z.object({
 	team_id: z.string().describe("Team/workspace ID"),
@@ -154,39 +147,6 @@ export async function get_page(
 }
 
 /**
- * Duplicates an existing page.
- * @param args - Contains team_id, page_id, and optional title.
- * @param token - The authentication token.
- * @returns The duplicated page.
- */
-export async function duplicate_page(
-	args: z.infer<typeof duplicatePageSchema>,
-	token: string,
-) {
-	// TODO: Implement duplicate_page API call
-	// Should call: POST Duplicate a page
-	// API endpoint: `/${team_id}/pages/${page_id}/duplicate` with optional title in body
-
-	return {
-		content: [
-			{
-				type: "text" as const,
-				text: JSON.stringify(
-					{
-						error: "Not implemented",
-						message:
-							"duplicate_page function is a placeholder and not yet implemented",
-						requested_args: args,
-					},
-					null,
-					2,
-				),
-			},
-		],
-	};
-}
-
-/**
  * Gets all pages for a team, optionally filtered by project.
  * @param args - Contains team_id and optional project_id and cursor.
  * @param token - The authentication token.
@@ -286,16 +246,6 @@ export function registerPageTools(server: McpServer, authToken: string) {
 			inputSchema: getPageSchema.shape,
 		},
 		(args) => get_page(args, authToken),
-	);
-
-	server.registerTool(
-		"duplicate_page",
-		{
-			title: "Duplicate Page",
-			description: "Creates a duplicate of an existing page.",
-			inputSchema: duplicatePageSchema.shape,
-		},
-		(args) => duplicate_page(args, authToken),
 	);
 
 	server.registerTool(

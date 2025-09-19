@@ -5,43 +5,6 @@ import { apiClient } from "../lib/api-client.js";
 // Schema for getting the current user's information. No input needed.
 export const getMyAccountSchema = z.object({});
 
-// Schema for updating the current user's information. All fields are optional.
-export const updateMyAccountSchema = z.object({
-	first_name: z.string().optional().describe("The user's first name."),
-	last_name: z.string().optional().describe("The user's last name."),
-	display_name: z.string().optional().describe("The user's display name."),
-	profile_image: z
-		.string()
-		.url()
-		.optional()
-		.describe("URL for the user's profile image."),
-	thumbnail_image: z
-		.string()
-		.url()
-		.optional()
-		.describe("URL for the user's thumbnail image."),
-	color: z
-		.string()
-		.optional()
-		.describe("A color associated with the user (e.g., 'red', '#FF0000')."),
-	timezone_id: z
-		.string()
-		.optional()
-		.describe("The user's timezone identifier (e.g., 'America/Los_Angeles')."),
-	autodetect_timezone_id: z
-		.boolean()
-		.optional()
-		.describe("Whether to automatically detect the user's timezone."),
-	locale: z
-		.string()
-		.optional()
-		.describe("The user's preferred locale (e.g., 'en')."),
-	job_description: z
-		.string()
-		.optional()
-		.describe("The user's job description."),
-});
-
 // Schema for getting team members. Requires a team_id.
 export const getTeamMembersSchema = z.object({
 	team_id: z
@@ -49,16 +12,6 @@ export const getTeamMembersSchema = z.object({
 		.describe(
 			"The ID of the team to get members from. Use the get_me tool to find your team IDs.",
 		),
-});
-
-// Schema for updating a team member. Requires team_id, user_id and optional role.
-export const updateTeamMemberSchema = z.object({
-	team_id: z.string().describe("Team/workspace ID"),
-	user_id: z.string().describe("User ID of team member to update"),
-	role: z
-		.enum(["admin", "member", "viewer"])
-		.optional()
-		.describe("Updated role for team member"),
 });
 
 /**
@@ -86,30 +39,6 @@ export async function get_my_account(
 }
 
 /**
- * Updates the current user's details.
- * @param args - The fields to update.
- * @param token - The authentication token.
- * @returns The updated user's information.
- */
-export async function update_my_account(
-	args: z.infer<typeof updateMyAccountSchema>,
-	token: string,
-) {
-	const response = await apiClient.makeRequest("/users/me", token, {
-		method: "PATCH",
-		body: JSON.stringify(args),
-	});
-	return {
-		content: [
-			{
-				type: "text" as const,
-				text: JSON.stringify(response, null, 2),
-			},
-		],
-	};
-}
-
-/**
  * Fetches the members of a specific team.
  * @param args - Contains the team_id.
  * @param token - The authentication token.
@@ -123,35 +52,6 @@ export async function get_team_members(
 	const response = await apiClient.makeRequest(
 		`/teams/${team_id}/members`,
 		token,
-	);
-	return {
-		content: [
-			{
-				type: "text" as const,
-				text: JSON.stringify(response, null, 2),
-			},
-		],
-	};
-}
-
-/**
- * Updates a team member's role.
- * @param args - Contains the team_id, user_id, and optional role.
- * @param token - The authentication token.
- * @returns The updated team member information.
- */
-export async function update_team_member(
-	args: z.infer<typeof updateTeamMemberSchema>,
-	token: string,
-) {
-	const { team_id, user_id, ...payload } = args;
-	const response = await apiClient.makeRequest(
-		`/teams/${team_id}/members/${user_id}`,
-		token,
-		{
-			method: "PATCH",
-			body: JSON.stringify(payload),
-		},
 	);
 	return {
 		content: [
@@ -190,17 +90,6 @@ export function registerUserTools(server: McpServer, authToken: string) {
 	);
 
 	server.registerTool(
-		"update_my_account",
-		{
-			title: "Update Current User",
-			description:
-				"Updates the profile information for the currently authenticated user.",
-			inputSchema: updateMyAccountSchema.shape,
-		},
-		(args) => update_my_account(args, authToken),
-	);
-
-	server.registerTool(
 		"get_team_members",
 		{
 			title: "Get Team Members",
@@ -208,15 +97,5 @@ export function registerUserTools(server: McpServer, authToken: string) {
 			inputSchema: getTeamMembersSchema.shape,
 		},
 		(args) => get_team_members(args, authToken),
-	);
-
-	server.registerTool(
-		"update_team_member",
-		{
-			title: "Update Team Member",
-			description: "Updates a team member's role and other properties.",
-			inputSchema: updateTeamMemberSchema.shape,
-		},
-		(args) => update_team_member(args, authToken),
 	);
 }

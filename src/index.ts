@@ -1,16 +1,9 @@
 // Import all tool functions directly
-import {
-	get_my_account,
-	update_my_account,
-	get_team_members,
-	update_team_member,
-} from "./tools/user.js";
+import { get_my_account, get_team_members } from "./tools/user.js";
 import {
 	createCard,
 	getCard,
 	updateCard,
-	deleteCard,
-	duplicateCard,
 	getCardsAssignedToUser,
 	addRelatedCard,
 	archiveCard,
@@ -29,8 +22,6 @@ import {
 	get_board,
 	get_boards,
 	update_board,
-	delete_board,
-	duplicate_board,
 } from "./tools/boards.js";
 import { get_tags, add_tags_to_card } from "./tools/tags.js";
 import {
@@ -46,7 +37,6 @@ import {
 	create_page,
 	update_page,
 	get_page,
-	duplicate_page,
 	get_pages,
 	archive_page,
 } from "./tools/pages.js";
@@ -105,30 +95,6 @@ function createMCPHandler(authToken: string) {
 									inputSchema: { type: "object", properties: {} },
 								},
 								{
-									name: "update_my_account",
-									description: "Update current user profile information",
-									inputSchema: {
-										type: "object",
-										properties: {
-											first_name: { type: "string", description: "First name" },
-											last_name: { type: "string", description: "Last name" },
-											display_name: {
-												type: "string",
-												description: "Display name",
-											},
-											profile_image: {
-												type: "string",
-												description: "Profile image URL",
-											},
-											timezone_id: {
-												type: "string",
-												description: "Timezone ID",
-											},
-											locale: { type: "string", description: "Locale" },
-										},
-									},
-								},
-								{
 									name: "get_team_members",
 									description: "Get team members",
 									inputSchema: {
@@ -139,24 +105,6 @@ function createMCPHandler(authToken: string) {
 										required: ["team_id"],
 									},
 								},
-								{
-									name: "update_team_member",
-									description: "Update team member role",
-									inputSchema: {
-										type: "object",
-										properties: {
-											team_id: { type: "string", description: "Team ID" },
-											user_id: { type: "string", description: "User ID" },
-											role: {
-												type: "string",
-												enum: ["admin", "member", "viewer"],
-												description: "Role",
-											},
-										},
-										required: ["team_id", "user_id"],
-									},
-								},
-								// Card Management Tools
 								{
 									name: "create_card",
 									description:
@@ -200,34 +148,7 @@ function createMCPHandler(authToken: string) {
 										required: ["team_id", "card_id"],
 									},
 								},
-								{
-									name: "delete_card",
-									description: "Delete a specific card",
-									inputSchema: {
-										type: "object",
-										properties: {
-											team_id: { type: "string", description: "Team ID" },
-											card_id: { type: "string", description: "Card ID" },
-										},
-										required: ["team_id", "card_id"],
-									},
-								},
-								{
-									name: "duplicate_card",
-									description: "Duplicate a card",
-									inputSchema: {
-										type: "object",
-										properties: {
-											team_id: { type: "string", description: "Team ID" },
-											card_id: { type: "string", description: "Card ID" },
-											title: {
-												type: "string",
-												description: "Title for duplicated card",
-											},
-										},
-										required: ["team_id", "card_id"],
-									},
-								},
+
 								{
 									name: "get_cards_assigned_to_user",
 									description: "Get cards assigned to a user",
@@ -451,38 +372,7 @@ function createMCPHandler(authToken: string) {
 										required: ["team_id", "board_id"],
 									},
 								},
-								{
-									name: "delete_board",
-									description: "Delete a specific board",
-									inputSchema: {
-										type: "object",
-										properties: {
-											team_id: { type: "string", description: "Team ID" },
-											board_id: { type: "string", description: "Board ID" },
-										},
-										required: ["team_id", "board_id"],
-									},
-								},
-								{
-									name: "duplicate_board",
-									description: "Duplicate a board",
-									inputSchema: {
-										type: "object",
-										properties: {
-											team_id: { type: "string", description: "Team ID" },
-											board_id: { type: "string", description: "Board ID" },
-											title: {
-												type: "string",
-												description: "Title for duplicated board",
-											},
-											project_id: {
-												type: "string",
-												description: "Project ID for duplicated board",
-											},
-										},
-										required: ["team_id", "board_id"],
-									},
-								},
+
 								// Tag Management Tools
 								{
 									name: "get_tags",
@@ -688,22 +578,7 @@ function createMCPHandler(authToken: string) {
 										required: ["team_id", "page_id"],
 									},
 								},
-								{
-									name: "duplicate_page",
-									description: "Duplicate a page",
-									inputSchema: {
-										type: "object",
-										properties: {
-											team_id: { type: "string", description: "Team ID" },
-											page_id: { type: "string", description: "Page ID" },
-											title: {
-												type: "string",
-												description: "Title for duplicated page",
-											},
-										},
-										required: ["team_id", "page_id"],
-									},
-								},
+
 								{
 									name: "get_pages",
 									description: "Get pages",
@@ -913,14 +788,8 @@ function createMCPHandler(authToken: string) {
 							case "get_my_account":
 								toolResult = await get_my_account(toolArgs, authToken);
 								break;
-							case "update_my_account":
-								toolResult = await update_my_account(toolArgs, authToken);
-								break;
 							case "get_team_members":
 								toolResult = await get_team_members(toolArgs, authToken);
-								break;
-							case "update_team_member":
-								toolResult = await update_team_member(toolArgs, authToken);
 								break;
 							// Card Management
 							case "create_card":
@@ -932,12 +801,7 @@ function createMCPHandler(authToken: string) {
 							case "update_card":
 								toolResult = await updateCard(toolArgs, authToken);
 								break;
-							case "delete_card":
-								toolResult = await deleteCard(toolArgs, authToken);
-								break;
-							case "duplicate_card":
-								toolResult = await duplicateCard(toolArgs, authToken);
-								break;
+
 							case "get_cards_assigned_to_user":
 								toolResult = await getCardsAssignedToUser(toolArgs, authToken);
 								break;
@@ -982,12 +846,7 @@ function createMCPHandler(authToken: string) {
 							case "update_board":
 								toolResult = await update_board(toolArgs, authToken);
 								break;
-							case "delete_board":
-								toolResult = await delete_board(toolArgs, authToken);
-								break;
-							case "duplicate_board":
-								toolResult = await duplicate_board(toolArgs, authToken);
-								break;
+
 							// Tag Management
 							case "get_tags":
 								toolResult = await get_tags(toolArgs, authToken);
@@ -1037,9 +896,7 @@ function createMCPHandler(authToken: string) {
 							case "get_page":
 								toolResult = await get_page(toolArgs, authToken);
 								break;
-							case "duplicate_page":
-								toolResult = await duplicate_page(toolArgs, authToken);
-								break;
+
 							case "get_pages":
 								toolResult = await get_pages(toolArgs, authToken);
 								break;
