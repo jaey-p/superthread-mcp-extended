@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiClient } from "../lib/api-client.js";
+import { filterSpaces } from "../lib/response-filters.js";
 
 // Schema for creating a space
 export const createSpaceSchema = z.object({
@@ -167,11 +168,12 @@ export async function get_spaces(
 			`/${team_id}/projects${queryParams}`,
 			token,
 		);
+		const filteredSpaces = filterSpaces(spaces);
 		return {
 			content: [
 				{
 					type: "text" as const,
-					text: JSON.stringify(spaces, null, 2),
+					text: JSON.stringify(filteredSpaces, null, 2),
 				},
 			],
 		};

@@ -4,6 +4,7 @@ import { apiClient } from "../lib/api-client.js";
 import { search } from "../lib/search.js";
 import type { Board, BoardSearchResult } from "../types/boards.js";
 import { getUserFromToken, getUserTeams } from "./user.js";
+import { filterBoard } from "../lib/response-filters.js";
 
 const createBoardSchema = z.object({
 	team_id: z
@@ -128,6 +129,11 @@ const getBoardSchema = z.object({
 	query: z.string().describe("The title or ID of the board to search for."),
 });
 
+const getBoardDetailsSchema = z.object({
+	team_id: z.string().describe("The ID of the team containing the board."),
+	board_id: z.string().describe("The ID of the board to get details for."),
+});
+
 export async function get_board(
 	args: z.infer<typeof getBoardSchema>,
 	token: string,
@@ -166,6 +172,26 @@ export async function get_board(
 	);
 
 	return boardDetails;
+}
+
+export async function get_board_details(
+	args: z.infer<typeof getBoardDetailsSchema>,
+	token: string,
+) {
+	const { team_id, board_id } = args;
+	const response = await apiClient.makeRequest(
+		`/${team_id}/boards/${board_id}`,
+		token,
+	);
+	const filteredResponse = filterBoard(response);
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: JSON.stringify(filteredResponse, null, 2),
+			},
+		],
+	};
 }
 
 export function registerBoardTools(server: McpServer, authToken: string) {
@@ -230,5 +256,16 @@ export function registerBoardTools(server: McpServer, authToken: string) {
 				content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 			};
 		},
+	);
+
+	server.registerTool(
+		"get_board_details",
+		{
+			title: "Get Board Details",
+			description:
+				"Gets detailed information about a specific board including its lists. Essential for the screenshot-to-tasks workflow.",
+			inputSchema: getBoardDetailsSchema.shape,
+		},
+		(args) => get_board_details(args, authToken),
 	);
 }

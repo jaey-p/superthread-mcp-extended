@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiClient } from "../lib/api-client.js";
+import { filterUserAccount } from "../lib/response-filters.js";
 
 // Schema for getting the current user's information. No input needed.
 export const getMyAccountSchema = z.object({});
@@ -28,11 +29,12 @@ export async function get_my_account(
 	// The previous implementation used /users/me, which is a sensible convention.
 	// Without a user_id, this is the only way to get the current user's data.
 	const response = await apiClient.makeRequest("/users/me", token);
+	const filteredResponse = filterUserAccount(response);
 	return {
 		content: [
 			{
 				type: "text" as const,
-				text: JSON.stringify(response, null, 2),
+				text: JSON.stringify(filteredResponse, null, 2),
 			},
 		],
 	};
