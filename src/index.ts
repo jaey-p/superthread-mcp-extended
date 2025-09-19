@@ -776,6 +776,294 @@ function createMCPHandler(authToken: string) {
 					};
 					break;
 
+				case "prompts/list":
+					responseData = {
+						jsonrpc: "2.0",
+						result: {
+							prompts: [
+								{
+									name: "create-board-workflow",
+									description:
+										"Generate a comprehensive workflow prompt for creating boards with organized task lists",
+									arguments: [
+										{
+											name: "project_name",
+											description: "Name of the project for the board",
+											required: true,
+										},
+										{
+											name: "team_size",
+											description:
+												"Number of team members working on this project",
+											required: false,
+										},
+										{
+											name: "sprint_duration",
+											description: "Sprint duration in weeks",
+											required: false,
+										},
+									],
+								},
+								{
+									name: "card-breakdown-prompt",
+									description:
+										"Break down complex tasks into manageable cards with proper estimation",
+									arguments: [
+										{
+											name: "epic_description",
+											description: "High-level epic or feature description",
+											required: true,
+										},
+										{
+											name: "complexity",
+											description: "Complexity level: simple, medium, complex",
+											required: false,
+										},
+									],
+								},
+								{
+									name: "project-planning-prompt",
+									description:
+										"Generate a comprehensive project planning prompt with milestones and deliverables",
+									arguments: [
+										{
+											name: "project_scope",
+											description: "Overall project scope and objectives",
+											required: true,
+										},
+										{
+											name: "timeline",
+											description: "Project timeline in months",
+											required: false,
+										},
+										{
+											name: "team_roles",
+											description: "Key team roles needed",
+											required: false,
+										},
+									],
+								},
+								{
+									name: "retrospective-prompt",
+									description:
+										"Generate a structured retrospective prompt for team improvement",
+									arguments: [
+										{
+											name: "sprint_number",
+											description: "Sprint or iteration number",
+											required: true,
+										},
+										{
+											name: "focus_area",
+											description:
+												"Specific area to focus on: process, communication, delivery",
+											required: false,
+										},
+									],
+								},
+								{
+									name: "status-update-prompt",
+									description:
+										"Generate a structured status update prompt for stakeholders",
+									arguments: [
+										{
+											name: "project_id",
+											description: "Project ID for the status update",
+											required: true,
+										},
+										{
+											name: "audience",
+											description: "Target audience: team, management, clients",
+											required: false,
+										},
+									],
+								},
+							],
+						},
+						id,
+					};
+					break;
+
+				case "prompts/get": {
+					const promptName = params?.name;
+					const promptArgs = params?.arguments || {};
+
+					try {
+						let promptResult: any;
+
+						switch (promptName) {
+							case "create-board-workflow":
+								promptResult = {
+									description: "Comprehensive board creation workflow prompt",
+									messages: [
+										{
+											role: "user",
+											content: {
+												type: "text",
+												text: `Create a comprehensive board workflow for project "${promptArgs.project_name || "[PROJECT_NAME]"}" with ${promptArgs.team_size || "a team"} members. Include:
+
+1. **Board Structure**: Suggest appropriate lists (e.g., Backlog, In Progress, Review, Done)
+2. **Task Categories**: Recommend card types and categories
+3. **Workflow Rules**: Define when cards move between lists
+4. **Team Responsibilities**: Assign roles and responsibilities
+5. **Sprint Planning**: ${promptArgs.sprint_duration ? `Plan for ${promptArgs.sprint_duration}-week sprints` : "Suggest sprint duration and planning approach"}
+
+Please provide a detailed, actionable workflow that the team can implement immediately.`,
+											},
+										},
+									],
+								};
+								break;
+
+							case "card-breakdown-prompt":
+								promptResult = {
+									description: "Task breakdown into manageable cards",
+									messages: [
+										{
+											role: "user",
+											content: {
+												type: "text",
+												text: `Break down this epic into manageable cards: "${promptArgs.epic_description || "[EPIC_DESCRIPTION]"}"
+
+Consider the complexity level: ${promptArgs.complexity || "medium"}
+
+Please provide:
+1. **Individual Cards**: List 5-8 specific, actionable cards
+2. **Acceptance Criteria**: Define clear completion criteria for each card
+3. **Dependencies**: Identify any dependencies between cards
+4. **Estimation**: Suggest story points or time estimates
+5. **Priority Order**: Recommend the sequence for implementation
+
+Format each card with: Title, Description, Acceptance Criteria, Estimated Effort, Dependencies.`,
+											},
+										},
+									],
+								};
+								break;
+
+							case "project-planning-prompt":
+								promptResult = {
+									description: "Comprehensive project planning guidance",
+									messages: [
+										{
+											role: "user",
+											content: {
+												type: "text",
+												text: `Create a comprehensive project plan for: "${promptArgs.project_scope || "[PROJECT_SCOPE]"}"
+
+Timeline: ${promptArgs.timeline || "[TIMELINE]"} months
+Team roles: ${promptArgs.team_roles || "[TEAM_ROLES]"}
+
+Please provide:
+1. **Project Phases**: Break down into logical phases with milestones
+2. **Deliverables**: Key deliverables for each phase
+3. **Resource Allocation**: How to distribute team efforts
+4. **Risk Assessment**: Potential risks and mitigation strategies
+5. **Success Metrics**: How to measure project success
+6. **Communication Plan**: Stakeholder communication approach
+
+Make this plan actionable and realistic for the given timeline and team structure.`,
+											},
+										},
+									],
+								};
+								break;
+
+							case "retrospective-prompt":
+								promptResult = {
+									description: "Structured team retrospective",
+									messages: [
+										{
+											role: "user",
+											content: {
+												type: "text",
+												text: `Facilitate a retrospective for Sprint ${promptArgs.sprint_number || "[SPRINT_NUMBER]"} with focus on: ${promptArgs.focus_area || "overall improvement"}
+
+Structure the retrospective around:
+1. **What Went Well**: Celebrate successes and positive outcomes
+2. **What Could Be Improved**: Identify areas for enhancement
+3. **Action Items**: Concrete steps for the next sprint
+4. **Team Dynamics**: How well the team collaborated
+5. **Process Efficiency**: Workflow and tool effectiveness
+
+${promptArgs.focus_area ? `Pay special attention to ${promptArgs.focus_area} aspects.` : ""}
+
+Provide a structured agenda and specific questions to guide productive discussion.`,
+											},
+										},
+									],
+								};
+								break;
+
+							case "status-update-prompt":
+								promptResult = {
+									description: "Structured status update communication",
+									messages: [
+										{
+											role: "user",
+											content: {
+												type: "text",
+												text: `Create a status update for project ${promptArgs.project_id || "[PROJECT_ID]"} targeting: ${promptArgs.audience || "stakeholders"}
+
+Include:
+1. **Executive Summary**: High-level progress overview
+2. **Key Accomplishments**: Major wins and completed milestones
+3. **Current Status**: What's in progress right now
+4. **Upcoming Priorities**: Next sprint/phase focus areas
+5. **Blockers & Risks**: Any issues requiring attention
+6. **Resource Needs**: Any support or resources needed
+7. **Timeline Updates**: Any schedule changes or updates
+
+${
+	promptArgs.audience === "management"
+		? "Focus on business impact and strategic alignment."
+		: promptArgs.audience === "team"
+			? "Include technical details and team-specific information."
+			: promptArgs.audience === "clients"
+				? "Emphasize deliverables and value provided."
+				: "Tailor the communication to be clear and actionable for stakeholders."
+}
+
+Format this for easy consumption and action.`,
+											},
+										},
+									],
+								};
+								break;
+
+							default:
+								responseData = {
+									jsonrpc: "2.0",
+									error: {
+										code: -32601,
+										message: `Unknown prompt: ${promptName}`,
+									},
+									id,
+								};
+								break;
+						}
+
+						if (promptResult) {
+							responseData = {
+								jsonrpc: "2.0",
+								result: promptResult,
+								id,
+							};
+						}
+					} catch (promptError: any) {
+						console.error(`Error getting prompt ${promptName}:`, promptError);
+						responseData = {
+							jsonrpc: "2.0",
+							error: {
+								code: -32000,
+								message: `Prompt execution failed: ${promptError?.message || "Unknown error"}`,
+							},
+							id,
+						};
+					}
+					break;
+				}
+
 				case "tools/call": {
 					const toolName = params?.name;
 					const toolArgs = params?.arguments || {};
