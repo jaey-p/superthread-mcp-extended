@@ -4,12 +4,6 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-10",
 	"compatibility_flags": ["nodejs_compat"],
-	"kv_namespaces": [
-		{
-			"binding": "superthread",
-			"id": "0534992372e5482e92494175d4f8f24f"
-		}
-	],
 	"observability": {
 		"enabled": true,
 		"head_sampling_rate": 1

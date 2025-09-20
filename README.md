@@ -1,221 +1,216 @@
-# Superthread MCP Server
+# Superthread MCP Extended
 
-An unofficial Model Context Protocol (MCP) server for integrating with the [Superthread](https://superthread.com) API. This server is **optimized for the screenshot-to-tasks workflow** with Claude and other MCP-compatible clients.
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![MCP](https://img.shields.io/badge/Model_Context_Protocol-Compatible-blue?style=flat-square)](https://modelcontextprotocol.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-## 🎯 **MVP Focus: Screenshot-to-Tasks Workflow**
+### A tiny MCP server by Sorbet Studio
 
-This server is streamlined to excel at **converting screenshots into actionable Superthread tasks** with minimal token usage and maximum efficiency.
 
-### **🚀 Key Benefits:**
+An enhanced Model Context Protocol (MCP) server that extends the [official Superthread MCP](https://api.superthread.com/mcp) with comprehensive CRUD operations and optimized workflows. _**Drop-in**_ replacement with significantly more functionality.
 
-- **⚡ 50% faster**: Reduced token processing with filtered responses
-- **💰 Cost effective**: 60-80% smaller API responses = lower token costs
-- **🎯 Single purpose**: Clear 4-step workflow instead of 41 confusing options
-- **🔧 Verified flow**: Complete data requirements validated with real API
-- **📦 Lighter bundle**: 30% smaller deployment package
+Chose cloudflare workers over vercel since this app is pretty much serverless functions, with no complex nodejs features being uses, just simple api request tranforms. Besides, I love cloudflare's free tier. 
 
-## 🛠️ Available MCP Tools
+Please help create an issue/PR if you wanna add more tools or improve the existing ones. 
 
-The Superthread MCP Server provides **8 essential tools** optimized for core task creation workflows, with **60-80% smaller response payloads** for faster performance.
+README is a work in progress. Ideas and thoughts are scattered rn.
 
-## ✅ **ESSENTIAL MVP TOOLS** (8 tools optimized for screenshot-to-tasks)
+## Key Difference from the official MCP
 
-### **1. User Management** (`src/tools/user.ts`)
+- **8 essential tools** instead of basic ask/search functionality
+- **Complete CRUD operations** for cards, boards, and spaces
+- **60-80% smaller API responses** through intelligent filtering
+- **Screenshot-to-tasks workflow** optimized for AI assistants
+- **Role-based security** with safe operation boundaries
 
-- `get_my_account` - Get team ID and user info (📉 **80% smaller response**)
+## Quick Start
 
-### **2. Workspace Navigation** (`src/tools/spaces.ts`)
+Use our hosted version directly without setup, with zero logging or data retention:
 
-- `get_spaces` - List workspaces with nested boards (📉 **70% smaller response**)
+```
+https://superthread-mcp.sorbet.studio/mcp/app
+```
 
-### **3. Board Details** (`src/tools/boards.ts`)
+Note: The Cloudflare worker for this, literally just builds this main branch and deploys it. If you find any security or privacy loop holes, please open an issue, and i'll fix it. 
 
-- `get_board_details` - Get board with lists for task creation (📉 **60% smaller response**)
+The idea is to just create a perfect drop in replacement to the original, no other code should ideally run apart from transforming/filtering the api requests from superthread. So you wont have to create your own instance, but if you want to, you should! (Deploy to Cloudflare button coming soon.)
 
-### **4. Task Management** (`src/tools/cards.ts`)
+Here's the MCP setup guide from [api.superthread.com/mcp](https://api.superthread.com/mcp) .. just the domain swapped in.
 
-- `create_card` - Create tasks from screenshot content
-- `get_card` - Get task details (filtered response)
+### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "superthread-extended": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "https://superthread-mcp.sorbet.studio/mcp/app",
+        "--header",
+        "Authorization:${ST_PAT}"
+      ],
+      "env": {
+        "ST_PAT": "Bearer stp-XXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXX"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+```bash
+claude mcp add \
+  --transport http \
+  --scope local \
+  "superthread-extended" \
+  "https://superthread-mcp.sorbet.studio/mcp/app" \
+  --env ST_PAT="stp-XXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXX" \
+  --header "Authorization: Bearer ${ST_PAT}"
+```
+
+### Cursor
+
+Add to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "superthread-extended": {
+      "type": "http",
+      "url": "https://superthread-mcp.sorbet.studio/mcp/app",
+      "headers": {
+        "Authorization": "Bearer stp-XXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXX"
+      }
+    }
+  }
+}
+```
+
+## Available Tools
+
+### User Management
+
+- `get_my_account` - Get team ID and user information
+- `get_team_members` - List team members
+
+### Workspace Navigation
+
+- `get_spaces` - List all spaces/projects with project IDs
+- `get_space` - Get detailed space information
+
+### Board Management
+
+- `get_board` - Search for boards by title
+- `get_board_details` - Get board with lists for task creation
+- `get_boards` - List boards with filtering options
+- `create_board` - Create new boards (admin/owner only)
+- `update_board` - Update board properties
+
+### Task Management
+
+- `create_card` - Create tasks from any input
+- `get_card` - Get detailed task information
 - `update_card` - Update task properties
+- `get_cards_assigned_to_user` - Get user's assigned tasks
 - `add_related_card` - Link related tasks
 - `archive_card` - Archive completed tasks
 
----
+## Core Workflow
 
-## 🚀 **WORKFLOW-OPTIMIZED FEATURES**
+A typical 4-step process for say, extracting tasks from a screenshot using claude:
 
-### **Screenshot-to-Tasks Prompt** (`src/index.ts`)
+1. **`get_my_account()`** → Extract team_id
+2. **`get_spaces(team_id)`** → Get project_id and available boards
+3. **`get_board_details(team_id, board_id)`** → Get list_id for task placement
+4. **`create_card(...)`** → Create tasks with proper hierarchy
 
-- `screenshot-to-tasks` - Convert screenshot descriptions into actionable Superthread tasks
+Again, as MCP servers go, you could let Claude (etc) figure the tool call chain.
 
----
+## Architecture
 
-## 📊 **MVP OPTIMIZATION RESULTS**
+### Response Optimization
 
-| Metric               | Before   | After       | Improvement       |
-| -------------------- | -------- | ----------- | ----------------- |
-| **Tools Available**  | 41 tools | 8 tools     | **80% simpler**   |
-| **Response Size**    | ~2KB     | ~400 bytes  | **80% smaller**   |
-| **Bundle Size**      | 202.9kb  | 144.5kb     | **30% smaller**   |
-| **Token Usage**      | High     | Minimal     | **50% reduction** |
-| **Workflow Clarity** | Complex  | Single path | **Clear focus**   |
+- Intelligent field filtering removes 60-80% of unnecessary data
+- Preserves essential IDs and relationships for tool chaining
+- Maintains full API compatibility with reduced token usage
 
----
+### Security Boundaries
 
-## 📁 **ARCHIVED TOOLS**
+- Read operations: Full access to user's workspace data
+- Create operations: Cards and boards only (with permissions)
+- Excluded: Destructive operations, member management, space creation
 
-For reference, the following tools have been moved to `src/tools/archive/` and can be restored if needed:
-
-- **Comments** (6 tools) - Secondary feature
-- **Notes** (3 tools) - Secondary feature
-- **Pages** (5 tools) - Secondary feature
-- **Lists** (2 tools) - Covered by `get_board_details`
-- **Tags** (2 tools) - Secondary feature
-- **Search** (1 tool) - Secondary feature
-- **Projects** (7 tools) - Confusing terminology (returns workflow lists)
-
-## 🎯 **Primary Workflow: Screenshot-to-Tasks**
-
-This server is optimized for **one core workflow** that converts screenshots into actionable Superthread tasks:
-
-### **4-Step Screenshot-to-Tasks Process:**
-
-1. **`get_my_account`** → Get `team_id` (simplified response)
-2. **`get_spaces`** → Get workspace/project structure with boards (simplified response)
-3. **`get_board_details`** → Get target board with available lists (simplified response)
-4. **`create_card`** → Create tasks from screenshot content
-
-### **Example Workflow:**
-
-```bash
-# Step 1: Get team information
-→ get_my_account()
-← { user_id: "uPP0S0zE", team_id: "t4SWmmPG", team_name: "Sorbet", role: "owner" }
-
-# Step 2: Get workspace structure
-→ get_spaces(team_id="t4SWmmPG")
-← { spaces: [{ id: "1", title: "Sorbet", boards: [{ id: "4", title: "Design" }] }] }
-
-# Step 3: Get board details with lists
-→ get_board_details(team_id="t4SWmmPG", board_id="4")
-← { board: { id: "4", title: "Design", lists: [{ id: "1", title: "Backlog" }] }}
-
-# Step 4: Create tasks from screenshot
-→ create_card(title="Fix navigation bug", team_id="t4SWmmPG", list_id="1", board_id="4")
-← Card created successfully
-```
-
-### **Task Management:**
-
-- **`get_card`** → Review task details
-- **`update_card`** → Modify task properties
-- **`add_related_card`** → Link dependencies
-- **`archive_card`** → Complete tasks
-
-### **Verified Data Flow:**
-
-✅ **All required parameters available** at each step  
-✅ **No missing data gaps** in the workflow  
-✅ **Minimal API calls** for maximum efficiency
-
-## 🛡️ **Security & Safety**
-
-### **Intentionally Excluded Operations**
-
-For data safety and preventing accidental data loss, these destructive operations are intentionally not implemented:
-
-- Permanent deletion of any content (cards, boards, projects)
-- Team member removal from teams/spaces
-- User privilege escalation
-- Destructive duplicate operations
-
-### **Role-Based Access Control**
-
-- `create_board` requires admin/owner role validation
-- All operations respect team membership and permissions
-- Authentication required via Superthread Personal Access Token
-
-## 🚀 **Development**
-
-### **Commands**
-
-- `bun run dev` / `bun start` - Start local development server
-- `bun run build` - Build for production using esbuild
-- `bun run format` - Format code with Biome
-- `bun run lint:fix` - Lint and auto-fix issues
-- `bun run type-check` - Run TypeScript type checking
-- `bun test` - Run health check (requires server running)
-- `bun run deploy` - Deploy to Cloudflare Workers
-
-### **Code Style**
-
-- **Formatting**: 4-space indentation, 100-character line width (Biome configured)
-- **TypeScript**: Strict mode enabled, target ES2021, module ES2022
-- **Imports**: Use `.js` extensions for local imports, explicit type imports with `import type`
-- **Validation**: Use Zod schemas for input validation, export schemas with descriptive names
-- **Naming**: camelCase for functions/variables, PascalCase for classes/types, snake_case for API endpoints
-- **Error Handling**: Custom error classes (e.g., `SuperthreadAPIError`), descriptive error messages
-- **Structure**: Organize by feature (`tools/`, `types/`, `lib/`), register tools in `server.ts`
-- **MCP Tools**: Export tool functions and registration functions separately, include detailed descriptions
-- **API Client**: Use centralized `apiClient` from `lib/api-client.ts`, include proper auth token handling
-
-### **Project Structure**
+### Project Structure
 
 ```
 src/
 ├── lib/
-│   ├── api-client.ts      # Centralized API client
-│   ├── response-filters.ts # NEW: Response filtering for token optimization
-│   └── search.ts          # Search utilities
+│   ├── api-client.ts         # Centralized Superthread API client
+│   ├── response-filters.ts   # Response optimization
+│   └── search.ts            # Search utilities
 ├── tools/
-│   ├── user.ts           # User management (filtered responses)
-│   ├── spaces.ts         # Workspace navigation (filtered responses)
-│   ├── boards.ts         # Board details (filtered responses)
-│   ├── cards.ts          # Task management
-│   └── archive/          # NEW: Archived tools (7 files moved here)
-├── types/                # TypeScript type definitions
-├── index.ts              # Simplified JSON-RPC implementation (8 tools only)
-└── server.ts             # Simplified MCP server setup (4 registrations)
+│   ├── user.ts              # User and team operations
+│   ├── spaces.ts            # Workspace navigation
+│   ├── boards.ts            # Board management
+│   └── cards.ts             # Task operations
+├── types/                   # TypeScript definitions
+├── index.ts                 # Cloudflare Workers entry
+└── server.ts                # MCP server configuration
 ```
 
-### **Response Filtering System**
+## Self-Hosting
 
-The new `response-filters.ts` module implements intelligent filtering:
-
-- **Removes heavy fields**: timestamps, user objects, metadata arrays, base64 data
-- **Keeps essential data**: IDs, titles, core workflow information
-- **Reduces token usage**: 60-80% smaller API responses
-- **Maintains functionality**: All required data preserved for workflows
-
-## 🐳 **Docker Support**
-
-A Dockerfile is included for containerized deployment:
+### Development
 
 ```bash
-docker build -t superthread-mcp .
-docker run -p 3000:3000 superthread-mcp
+git clone <repository>
+cd superthread-mcp-extended
+bun install
+bun run dev
 ```
 
-## 🔌 **MCP Client Integration**
+### Deployment
 
-To use this server with Claude or another MCP client, configure it to connect to:
-
-```
-http://localhost:3000/mcp
-```
-
-Include your Superthread Personal Access Token in the Authorization header:
-
-```
-Authorization: Bearer YOUR_SUPERTHREAD_TOKEN
+```bash
+# Deploy to Cloudflare Workers
+bun run deploy
 ```
 
-## ⚙️ **Requirements**
+### Local Usage
 
-- Node.js 22+ or Bun runtime
-- Superthread Personal Access Token
+```
+http://localhost:8787/mcp/app
+```
+
+## Requirements
+
+- Superthread Personal Access Token (PAT)
+- Node.js 22+ or Bun runtime (for development)
 - Network access to api.superthread.com
 
-## 📄 **License**
+## Authentication
 
-This is an unofficial integration and is not affiliated with Superthread.
+All requests require a valid Superthread Personal Access Token:
+
+```
+Authorization: Bearer stp-XXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+Tokens can be generated in your Superthread account settings.
+
+---
+
+**Note:** This is an unofficial extension and is not affiliated with Superthread. For the official basic MCP server, visit [api.superthread.com/mcp](https://api.superthread.com/mcp).
+
+
+# Credit:
+
+- Superthread for the original MCP server and fantastic API docs (ofc the platform as well haha)
+- Cloudflare for the Workers platform
+- [Unofficial-Superthread-MCP](https://github.com/tdwells90/Unofficial-Superthread-MCP) for the initial inspiration and some code snippets, and the idea of using ZOD for request validation. Really cool project, please check them out too as a direct local alternative to this one.
