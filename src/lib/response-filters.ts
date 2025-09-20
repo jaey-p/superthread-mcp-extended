@@ -19,6 +19,7 @@ export interface FilteredBoard {
 export interface FilteredSpace {
 	id: string;
 	title: string;
+	description?: string;
 	boards: FilteredBoard[];
 }
 
@@ -139,6 +140,7 @@ export function filterSpaces(response: any): FilteredSpacesResponse {
 	const filteredSpaces: FilteredSpace[] = projects.map((project: any) => ({
 		id: project.id,
 		title: project.title || project.name,
+		description: project.description,
 		boards: (project.boards || []).map((board: any) => ({
 			id: board.id,
 			title: board.title || board.name,

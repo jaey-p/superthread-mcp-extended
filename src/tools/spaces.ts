@@ -128,27 +128,36 @@ export async function get_space(
 	args: z.infer<typeof getSpaceSchema>,
 	token: string,
 ) {
-	// TODO: Implement get_space API call
-	// Should call: GET Get a space
-	// API endpoint: `/${team_id}/projects/${space_id}`
+	try {
+		const { team_id, space_id } = args;
+		const response = (await apiClient.makeRequest(
+			`/${team_id}/projects/${space_id}`,
+			token,
+		)) as any;
 
-	return {
-		content: [
-			{
-				type: "text" as const,
-				text: JSON.stringify(
-					{
-						error: "Not implemented",
-						message:
-							"get_space function is a placeholder and not yet implemented",
-						requested_args: args,
-					},
-					null,
-					2,
-				),
-			},
-		],
-	};
+		// Apply basic filtering to reduce response size
+		const filteredResponse = {
+			id: response.id,
+			title: response.title || response.name,
+			description: response.description,
+			boards: (response.boards || []).map((board: any) => ({
+				id: board.id,
+				title: board.title || board.name,
+			})),
+		};
+
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: JSON.stringify(filteredResponse, null, 2),
+				},
+			],
+		};
+	} catch (error) {
+		console.error("Error getting space:", error);
+		throw new Error(`Failed to get space ${args.space_id}: ${error}`);
+	}
 }
 
 /**
@@ -247,8 +256,9 @@ export function registerSpaceTools(server: McpServer, authToken: string) {
 	server.registerTool(
 		"get_space",
 		{
-			title: "Get Space",
-			description: "Gets a specific space by ID.",
+			title: "Get Space Details",
+			description:
+				"Gets detailed information about a specific space/project by ID. Use this to view project details and contained boards.",
 			inputSchema: getSpaceSchema.shape,
 		},
 		(args) => get_space(args, authToken),
@@ -258,7 +268,8 @@ export function registerSpaceTools(server: McpServer, authToken: string) {
 		"get_spaces",
 		{
 			title: "Get Spaces",
-			description: "Gets all spaces for a team.",
+			description:
+				"Gets all spaces/projects for a team. Returns project IDs needed for board and card creation.",
 			inputSchema: getSpacesSchema.shape,
 		},
 		(args) => get_spaces(args, authToken),
