@@ -20,9 +20,7 @@ README is a work in progress. Ideas and thoughts are scattered rn.
 
 - **8 essential tools** instead of basic ask/search functionality
 - **Complete CRUD operations** for cards, boards, and spaces
-- **60-80% smaller API responses** through intelligent filtering
-- **Screenshot-to-tasks workflow** optimized for AI assistants
-- **Role-based security** with safe operation boundaries
+- **Optimized responses** for reduced token usage and faster tool chaining .. compared to raw api.
 
 ## Quick Start
 
