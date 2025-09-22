@@ -155,7 +155,6 @@ export async function get_space(
 			],
 		};
 	} catch (error) {
-		console.error("Error getting space:", error);
 		throw new Error(`Failed to get space ${args.space_id}: ${error}`);
 	}
 }
@@ -187,7 +186,6 @@ export async function get_spaces(
 			],
 		};
 	} catch (error) {
-		console.error("Error getting spaces:", error);
 		throw new Error("Failed to get spaces.");
 	}
 }

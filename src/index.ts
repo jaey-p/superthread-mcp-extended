@@ -314,7 +314,6 @@ Format the output for easy import into Superthread using the create_card tool.`,
 							};
 						}
 					} catch (toolError: any) {
-						console.error(`Error calling tool ${toolName}:`, toolError);
 						responseData = {
 							jsonrpc: "2.0",
 							error: {
@@ -343,7 +342,6 @@ Format the output for easy import into Superthread using the create_card tool.`,
 				headers: { "Content-Type": "application/json" },
 			});
 		} catch (error) {
-			console.error("Error handling MCP request:", error);
 			return new Response(
 				JSON.stringify({
 					jsonrpc: "2.0",
@@ -421,7 +419,6 @@ export default {
 			// Handle the MCP request
 			return await mcpHandler(request);
 		} catch (error) {
-			console.error("Error processing MCP request:", error);
 			return createErrorResponse(-32603, "Internal server error");
 		}
 	},

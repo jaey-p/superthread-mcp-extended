@@ -27,7 +27,7 @@ README is a work in progress. Ideas and thoughts are scattered rn.
 Use our hosted version directly without setup, with zero logging or data retention:
 
 ```
-https://superthread-mcp.sorbet.studio/mcp/app
+https://superthread.sorbet.studio/mcp/app
 ```
 
 Note: The Cloudflare worker for this, literally just builds this main branch and deploys it. If you find any security or privacy loop holes, please open an issue, and i'll fix it. 
@@ -48,7 +48,7 @@ Add to your `claude_desktop_config.json`:
       "args": [
         "-y",
         "mcp-remote@latest",
-        "https://superthread-mcp.sorbet.studio/mcp/app",
+        "https://superthread.sorbet.studio/mcp/app",
         "--header",
         "Authorization:${ST_PAT}"
       ],
@@ -67,7 +67,7 @@ claude mcp add \
   --transport http \
   --scope local \
   "superthread-extended" \
-  "https://superthread-mcp.sorbet.studio/mcp/app" \
+  "https://superthread.sorbet.studio/mcp/app" \
   --env ST_PAT="stp-XXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXX" \
   --header "Authorization: Bearer ${ST_PAT}"
 ```
@@ -81,7 +81,7 @@ Add to `~/.cursor/mcp.json`:
   "mcpServers": {
     "superthread-extended": {
       "type": "http",
-      "url": "https://superthread-mcp.sorbet.studio/mcp/app",
+      "url": "https://superthread.sorbet.studio/mcp/app",
       "headers": {
         "Authorization": "Bearer stp-XXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXX"
       }

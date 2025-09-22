@@ -19,8 +19,7 @@
 		"hono": "^4.8.12",
 		"zod": "^3.25.67",
 		"cors": "^2.8.5",
-		"express": "^5.1.0",
-		"toucan-js": "^3.3.0"
+		"express": "^5.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.4",
