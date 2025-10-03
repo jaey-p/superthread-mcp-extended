@@ -27,10 +27,39 @@ export interface FilteredSpacesResponse {
 	spaces: FilteredSpace[];
 }
 
+export interface FilteredCard {
+	id: string;
+	title: string;
+	content?: string;
+	status: string;
+	priority?: number;
+	estimate?: number;
+	owner_id?: string;
+	list_id: string;
+	board_id: string;
+	project_id: string;
+	sprint_id?: string;
+	archived?: {
+		user_id: string;
+		time_archived: number;
+	};
+	parent_card?: {
+		title: string;
+		card_id: string;
+		list_color: string;
+		status: string;
+	};
+	epic?: {
+		id: string;
+		title: string;
+	};
+}
+
 export interface FilteredList {
 	id: string;
 	title: string;
 	behavior: string;
+	cards: FilteredCard[];
 }
 
 export interface FilteredBoardDetails {
@@ -154,7 +183,7 @@ export function filterSpaces(response: any): FilteredSpacesResponse {
 
 /**
  * Filters get_board response to essential board structure.
- * Keeps only board info and lists with basic details.
+ * Keeps board info, lists, and cards with essential fields only.
  */
 export function filterBoard(response: any): FilteredBoardResponse {
 	// Handle wrapped response
@@ -171,6 +200,27 @@ export function filterBoard(response: any): FilteredBoardResponse {
 			id: list.id,
 			title: list.title || list.name,
 			behavior: list.behavior || "active",
+			cards: (list.cards || []).map((card: any) => ({
+				id: card.id,
+				title: card.title,
+				content: card.content,
+				status: card.status,
+				priority: card.priority,
+				estimate: card.estimate,
+				owner_id: card.owner_id,
+				list_id: card.list_id,
+				board_id: card.board_id,
+				project_id: card.project_id,
+				sprint_id: card.sprint_id,
+				archived: card.archived,
+				parent_card: card.parent_card,
+				epic: card.epic
+					? {
+							id: card.epic.id,
+							title: card.epic.title,
+						}
+					: undefined,
+			})),
 		})),
 	};
 
