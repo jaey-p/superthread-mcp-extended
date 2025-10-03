@@ -28,10 +28,10 @@ export interface SearchResult {
 	count: number;
 	boards?: BoardSearchResult[];
 	cards?: CardSearchResult[];
-	pages?: any[];
-	projects?: any[];
-	epics?: any[];
-	notes?: any[];
+	pages?: unknown[];
+	projects?: unknown[];
+	epics?: unknown[];
+	notes?: unknown[];
 }
 
 export async function search(

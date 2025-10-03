@@ -183,7 +183,7 @@ export function filterBoard(response: any): FilteredBoardResponse {
  * Generic filter that removes heavy fields while preserving structure.
  * Use this for responses that don't have specific filter functions.
  */
-export function filterGenericResponse(response: any): any {
+export function filterGenericResponse(response: unknown): unknown {
 	return stripHeavyFields(response);
 }
 

@@ -35,11 +35,11 @@ export class SuperthreadAPIClient {
 		};
 
 		const startTime = Date.now();
-		const method = options.method ?? "GET";
+		const _method = options.method ?? "GET";
 
 		try {
 			const response = await fetch(url, { ...options, headers });
-			const durationMs = Date.now() - startTime;
+			const _durationMs = Date.now() - startTime;
 
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -60,7 +60,7 @@ export class SuperthreadAPIClient {
 				throw error;
 			}
 
-			const durationMs = Date.now() - startTime;
+			const _durationMs = Date.now() - startTime;
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
 

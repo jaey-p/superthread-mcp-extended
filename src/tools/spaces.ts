@@ -60,7 +60,7 @@ export const addMemberToSpaceSchema = z.object({
  */
 export async function create_space(
 	args: z.infer<typeof createSpaceSchema>,
-	token: string,
+	_token: string,
 ) {
 	// TODO: Implement create_space API call
 	// Should call: POST Create a space
@@ -93,7 +93,7 @@ export async function create_space(
  */
 export async function update_space(
 	args: z.infer<typeof updateSpaceSchema>,
-	token: string,
+	_token: string,
 ) {
 	// TODO: Implement update_space API call
 	// Should call: PATCH Update a space
@@ -185,7 +185,7 @@ export async function get_spaces(
 				},
 			],
 		};
-	} catch (error) {
+	} catch (_error) {
 		throw new Error("Failed to get spaces.");
 	}
 }
@@ -198,7 +198,7 @@ export async function get_spaces(
  */
 export async function add_member_to_space(
 	args: z.infer<typeof addMemberToSpaceSchema>,
-	token: string,
+	_token: string,
 ) {
 	// TODO: Implement add_member_to_space API call
 	// Should call: POST Add a member to a space
