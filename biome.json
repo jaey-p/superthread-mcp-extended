@@ -9,7 +9,8 @@
 		"enabled": true
 	},
 	"files": {
-		"includes": ["src/**/*"]
+		"includes": ["src/**/*"],
+		"ignoreUnknown": false
 	},
 	"formatter": {
 		"enabled": true,
@@ -20,6 +21,11 @@
 		"enabled": true,
 		"rules": {
 			"recommended": true,
+			"correctness": {
+				"noUnusedVariables": "error",
+				"noUnusedImports": "error",
+				"noUnusedFunctionParameters": "warn"
+			},
 			"style": {
 				"noInferrableTypes": "error",
 				"noNonNullAssertion": "off",
@@ -35,8 +41,11 @@
 			},
 			"suspicious": {
 				"noConfusingVoidType": "off",
-				"noDebugger": "off",
-				"noExplicitAny": "off"
+				"noDebugger": "warn",
+				"noExplicitAny": "warn"
+			},
+			"complexity": {
+				"noForEach": "off"
 			}
 		}
 	},
