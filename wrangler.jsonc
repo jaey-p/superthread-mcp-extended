@@ -8,10 +8,6 @@
 		"enabled": true,
 		"head_sampling_rate": 1
 	},
-	"assets": {
-		"directory": "./static/",
-		"binding": "ASSETS"
-	},
 	"env": {
 		"staging": {
 			"name": "superthread-staging",
