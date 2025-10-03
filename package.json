@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"deploy": "wrangler deploy --env production",
+		"deploy": "wrangler deploy",
 		"deploy:staging": "wrangler deploy --env staging",
 		"dev": "wrangler dev",
 		"format": "biome format --write",

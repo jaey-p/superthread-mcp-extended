@@ -1,11 +1,12 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "superthread-production",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-10",
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": {
 		"enabled": true,
-		"head_sampling_rate": 1
+		"head_sampling_rate": 0.1
 	},
 	"env": {
 		"staging": {
@@ -13,13 +14,6 @@
 			"observability": {
 				"enabled": true,
 				"head_sampling_rate": 1
-			}
-		},
-		"production": {
-			"name": "superthread-production",
-			"observability": {
-				"enabled": true,
-				"head_sampling_rate": 0.1
 			}
 		}
 	}
