@@ -3,6 +3,7 @@ import { registerUserTools } from "./tools/user.js";
 import { registerCardTools } from "./tools/cards.js";
 import { registerBoardTools } from "./tools/boards.js";
 import { registerSpaceTools } from "./tools/spaces.js";
+import { registerTagTools } from "./tools/tags.js";
 
 /**
  * Creates MCP server with Bearer token (used for JSON-RPC direct implementation)
@@ -19,6 +20,7 @@ export function createMCPServer(authToken: string): McpServer {
 	registerSpaceTools(server, authToken);
 	registerBoardTools(server, authToken);
 	registerCardTools(server, authToken);
+	registerTagTools(server, authToken);
 
 	return server;
 }

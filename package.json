@@ -9,6 +9,7 @@
 		"format": "biome format --write",
 		"lint:fix": "biome lint --fix",
 		"start": "wrangler dev",
+		"start:standalone": "bun run src/standalone.ts",
 		"cf-typegen": "wrangler types",
 		"type-check": "tsc --noEmit",
 		"build": "esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --format=esm --external:@modelcontextprotocol/sdk --external:express --external:cloudflare:workers --sourcemap",
