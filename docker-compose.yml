@@ -1,0 +1,25 @@
+services:
+  superthread-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: superthread-mcp-extended
+    ports:
+      - "8787:8787"
+    restart: unless-stopped
+    environment:
+      # 필요한 환경 변수를 여기에 추가하세요
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=8787
+    # 볼륨 마운트 (개발 시 코드 변경 감지)
+    # volumes:
+    #   - ./src:/app/src
+    # Health check는 curl이 없으므로 비활성화
+    # 필요시 wget이나 nc를 설치하여 활성화 가능
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
