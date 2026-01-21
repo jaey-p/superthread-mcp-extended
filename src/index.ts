@@ -878,10 +878,10 @@ export default {
 					client_id?: string;
 					code_verifier?: string;
 				};
-				
-				// Log for debugging
-				console.log("Token endpoint request body:", JSON.stringify(body, null, 2));
-				
+
+				// Log for debugging (will stay commented out in prod)
+				// console.log("Token endpoint request body:", JSON.stringify(body, null, 2));
+
 				const grantType = body.grant_type || "authorization_code"; // Default to authorization_code if not provided
 
 				// For authorization_code grant (or default), return a dummy token
@@ -977,14 +977,14 @@ export default {
 		if (!authToken) {
 			const authHeader = request.headers.get("Authorization");
 			const allHeaders = Object.fromEntries(request.headers.entries());
-			
+
 			// Debug: Log all headers to help diagnose the issue
 			console.log("MCP Request Headers:", JSON.stringify(allHeaders, null, 2));
-			
+
 			const debugInfo = authHeader
 				? `Received: "${authHeader.substring(0, 50)}..."`
 				: "No Authorization header found";
-			
+
 			// More helpful error message for Claude Code users
 			return createErrorResponse(
 				-32600,
