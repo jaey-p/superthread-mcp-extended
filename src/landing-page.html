@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superthread MCP Extended - Docs</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --text-color: #c9d1d9;
+            --heading-color: #ffffff;
+            --accent-color: #58a6ff;
+            --border-color: #30363d;
+            --code-bg: #161b22;
+            --card-bg: #161b22;
+            --hover-bg: #21262d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: var(--heading-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3em;
+            font-size: 2em;
+            margin-bottom: 16px;
+        }
+
+        h4 {
+            color: var(--heading-color);
+            margin-top: 24px;
+            margin-bottom: 16px;
+        }
+
+        blockquote {
+            margin: 0;
+            padding: 0 1em;
+            color: #8b949e;
+            border-left: 0.25em solid #30363d;
+            margin-bottom: 16px;
+        }
+
+        .note {
+            background-color: rgba(56, 139, 253, 0.15);
+            border: 1px solid rgba(56, 139, 253, 0.4);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .note p {
+            margin: 0 0 8px 0;
+        }
+        
+        .note p:last-child {
+            margin-bottom: 0;
+        }
+
+        .note ul {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        code {
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            background-color: rgba(110, 118, 129, 0.4);
+            border-radius: 6px;
+            padding: 0.2em 0.4em;
+            font-size: 85%;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            margin-bottom: 16px;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            font-size: 100%;
+            color: var(--text-color);
+        }
+
+        .accordion {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .accordion-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .accordion-item:last-child {
+            border-bottom: none;
+        }
+
+        .accordion-header {
+            background-color: var(--card-bg);
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .accordion-header:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .accordion-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--heading-color);
+        }
+
+        .icon {
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-item.active .icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 16px;
+            background-color: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .accordion-item.active .accordion-content {
+            display: block;
+        }
+        
+        .install-button {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .img-badge {
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>All MCP Clients</h1>
+        <blockquote>Installation examples for Superthread MCP Extended clients</blockquote>
+
+        <p>This MCP server (Superthread Extended) supports all MCP clients. Below are configuration examples.</p>
+        
+        <div class="note">
+            <p><strong>Note:</strong> Replace <code>YOUR_API_KEY</code> with your Superthread Personal Access Token (PAT) prefixed with <code>stp-</code>.</p>
+            <p><strong>MCP Endpoint URL (Use this for setup):</strong> <code>https://superthread.sorbet.studio/mcp/app</code></p>
+        </div>
+
+        <div class="accordion">
+            <!-- Claude Code -->
+            <div class="accordion-item">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <h3>Claude Code</h3>
+                    <span class="icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <p>Run this command. See <a href="https://docs.anthropic.com/en/docs/claude-code/mcp" target="_blank">Claude Code MCP docs</a> for more info.</p>
+
+                    <h4>Remote Server Connection</h4>
+                    <pre><code>claude mcp add --header "Authorization: Bearer stp-YOUR_KEY" --transport http superthread https://superthread.sorbet.studio/mcp/app</code></pre>
+
+                    <h4>Local Server Connection (Development)</h4>
+                     <p>If you have cloned the repository locally:</p>
+                    <pre><code>claude mcp add superthread -- bun run src/index.ts</code></pre>
+                </div>
+            </div>
+
+            <!-- Cursor -->
+            <div class="accordion-item">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <h3>Cursor</h3>
+                    <span class="icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <p>Go to: <code>Settings</code> -> <code>Cursor Settings</code> -> <code>MCP</code> -> <code>Add new global MCP server</code></p>
+                    <p>Pasting the following configuration into your Cursor <code>~/.cursor/mcp.json</code> file is the recommended approach. Use <a href="https://docs.cursor.com/context/model-context-protocol" target="_blank">Cursor MCP docs</a> for more info.</p>
+
+                    <h4>Remote Server Connection</h4>
+                    <pre><code>{
+  "mcpServers": {
+    "superthread": {
+      "url": "https://superthread.sorbet.studio/mcp/app",
+      "headers": {
+        "Authorization": "Bearer stp-YOUR_KEY"
+      }
+    }
+  }
+}</code></pre>
+                </div>
+            </div>
+            
+            <!-- VS Code -->
+            <div class="accordion-item">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <h3>VS Code</h3>
+                    <span class="icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <p>Add this to your VS Code MCP config file. See <a href="https://code.visualstudio.com/docs/copilot/chat/mcp-servers" target="_blank">VS Code MCP docs</a>.</p>
+
+                    <h4>Remote Server Connection</h4>
+                    <pre><code>"mcp": {
+  "servers": {
+    "superthread": {
+      "type": "http",
+      "url": "https://superthread.sorbet.studio/mcp/app",
+      "headers": {
+        "Authorization": "Bearer stp-YOUR_KEY"
+      }
+    }
+  }
+}</code></pre>
+                </div>
+            </div>
+
+            <!-- Windsurf -->
+            <div class="accordion-item">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <h3>Windsurf</h3>
+                    <span class="icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <p>Add this to your Windsurf MCP config file. See <a href="https://docs.windsurf.com/windsurf/cascade/mcp" target="_blank">Windsurf MCP docs</a>.</p>
+                    
+                    <h4>Remote Server Connection</h4>
+                    <pre><code>{
+  "mcpServers": {
+    "superthread": {
+      "serverUrl": "https://superthread.sorbet.studio/mcp/app",
+      "headers": {
+        "Authorization": "Bearer stp-YOUR_KEY"
+      }
+    }
+  }
+}</code></pre>
+                </div>
+            </div>
+
+            <!-- Claude Desktop -->
+            <div class="accordion-item">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <h3>Claude Desktop</h3>
+                    <span class="icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <h4>Remote Server Connection</h4>
+                    <p>Open Claude Desktop and navigate to Settings > Connectors > Add Custom Connector.</p>
+                    <p>Enter the name as <code>Superthread</code> and the remote MCP server URL as <code>https://superthread.sorbet.studio/mcp/app</code>.</p>
+                    
+                     <h4>Alternative Configuration</h4>
+                     <p>Add to your <code>claude_desktop_config.json</code>:</p>
+                    <pre><code>{
+  "mcpServers": {
+    "superthread-extended": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "https://superthread.sorbet.studio/mcp/app",
+        "--header",
+        "Authorization:${ST_PAT}"
+      ],
+      "env": {
+        "ST_PAT": "Bearer stp-YOUR_KEY"
+      }
+    }
+  }
+}</code></pre>
+                </div>
+            </div>
+            
+        </div>
+        
+        <p style="text-align: center; color: #8b949e; margin-top: 40px; font-size: 0.9em;">
+            Superthread MCP Extended Server
+        </p>
+    </div>
+
+    <script>
+        function toggleAccordion(element) {
+            const item = element.parentElement;
+            const content = item.querySelector('.accordion-content');
+            
+            // Toggle active class
+            if (item.classList.contains('active')) {
+                item.classList.remove('active');
+            } else {
+                // Close other items (optional, remove if you want multiple open)
+                document.querySelectorAll('.accordion-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                item.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
