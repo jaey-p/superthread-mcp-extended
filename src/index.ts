@@ -122,11 +122,11 @@ function createMCPHandler(authToken: string) {
 											project_id: { type: "string", description: "Project/space ID. Use space_name instead if you don't have the ID." },
 											board_id: { type: "string", description: "Board ID. Use board_name instead if you don't have the ID." },
 											sprint_id: { type: "string", description: "Sprint ID (alternative to board_id)" },
-											// Name-based placement (preferred)
-											space_name: { type: "string", description: "Space/project name (fuzzy matched). Use instead of project_id." },
-											board_name: { type: "string", description: "Board name (fuzzy matched). Use instead of board_id." },
-											list_name: { type: "string", description: "List name (fuzzy matched). Use instead of list_id." },
-											list_behavior: { type: "string", description: "List behavior: 'unstarted', 'active', 'completed'. Use instead of list_id." },
+											// Name-based placement — resolved against get_context output, use IDs when you have them
+											space_name: { type: "string", description: "Space name as returned by get_context. Prefer project_id when you have it." },
+											board_name: { type: "string", description: "Board name as returned by get_context. Prefer board_id when you have it." },
+											list_name: { type: "string", description: "List title as returned by get_context. Prefer list_id — list names are user-defined and can change." },
+											list_behavior: { type: "string", description: "List behavior value as returned by get_context. Prefer list_id — multiple lists can share the same behavior." },
 											// Card fields
 											owner_id: { type: "string", description: "Owner user ID" },
 											priority: { type: "number", description: "Priority level (numeric)" },

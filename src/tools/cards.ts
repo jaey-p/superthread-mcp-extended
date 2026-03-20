@@ -21,11 +21,11 @@ export const createCardSchema = z.object({
 		.string()
 		.optional()
 		.describe("Sprint ID (alternative to board_id)"),
-	// Name-based placement (preferred — resolves IDs automatically)
-	space_name: z.string().optional().describe("Space/project name (fuzzy matched). Use instead of project_id."),
-	board_name: z.string().optional().describe("Board name (fuzzy matched). Use instead of board_id."),
-	list_name: z.string().optional().describe("List name (fuzzy matched). Use instead of list_id."),
-	list_behavior: z.string().optional().describe("List behavior type: 'unstarted', 'active', 'completed'. Use instead of list_id."),
+	// Name-based placement — resolved against get_context output, use IDs when you have them
+	space_name: z.string().optional().describe("Space name as returned by get_context. Fuzzy matched. Prefer project_id when you have it."),
+	board_name: z.string().optional().describe("Board name as returned by get_context. Fuzzy matched. Prefer board_id when you have it."),
+	list_name: z.string().optional().describe("List title as returned by get_context. Fuzzy matched. Prefer list_id when you have it — list names are user-defined and can change."),
+	list_behavior: z.string().optional().describe("List behavior value as returned by get_context (e.g. the 'behavior' field on a list). Prefer list_id — multiple lists can share the same behavior."),
 	content: z.string().optional().describe("Card description"),
 	owner_id: z.string().optional().describe("Owner user ID"),
 	priority: z.number().optional().describe("Priority level (numeric)"),
