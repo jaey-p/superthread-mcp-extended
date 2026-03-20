@@ -1,26 +1,31 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { apiClient } from "../lib/api-client.js";
+import { resolveIds } from "../lib/context.js";
 
 export const createCardSchema = z.object({
 	team_id: z
 		.string()
 		.describe(
-			"Use the get_me tool first to get the team IDs available. If needed, confirm with the user which team they want to use.",
+			"Team/workspace ID. Use get_context to fetch this automatically.",
 		),
 	title: z.string().describe("Card title"),
-	list_id: z.string().describe("List ID where the card will be placed"),
-	project_id: z.string().optional().describe("Project ID the card belongs to"),
+	// ID-based placement (traditional)
+	list_id: z.string().optional().describe("List ID where the card will be placed. Use list_name or list_behavior instead if you don't have the ID."),
+	project_id: z.string().optional().describe("Project/space ID the card belongs to"),
 	board_id: z
 		.string()
 		.optional()
-		.describe(
-			"Board ID (required if sprint_id not provided). Use get_board tool to get the board ID from a board name",
-		),
+		.describe("Board ID. Use board_name instead if you don't have the ID."),
 	sprint_id: z
 		.string()
 		.optional()
-		.describe("Sprint ID (required if board_id not provided)"),
+		.describe("Sprint ID (alternative to board_id)"),
+	// Name-based placement (preferred — resolves IDs automatically)
+	space_name: z.string().optional().describe("Space/project name (fuzzy matched). Use instead of project_id."),
+	board_name: z.string().optional().describe("Board name (fuzzy matched). Use instead of board_id."),
+	list_name: z.string().optional().describe("List name (fuzzy matched). Use instead of list_id."),
+	list_behavior: z.string().optional().describe("List behavior type: 'unstarted', 'active', 'completed'. Use instead of list_id."),
 	content: z.string().optional().describe("Card description"),
 	owner_id: z.string().optional().describe("Owner user ID"),
 	priority: z.number().optional().describe("Priority level (numeric)"),
@@ -151,10 +156,24 @@ export async function createCard(
 	args: z.infer<typeof createCardSchema>,
 	token: string,
 ) {
-	const { team_id, ...payload } = args;
+	const { team_id, space_name, board_name, list_name, list_behavior, ...payload } = args;
+
+	// Resolve name-based fields to IDs when IDs are not provided
+	if (!payload.list_id || (!payload.board_id && !payload.sprint_id)) {
+		if (space_name || board_name || list_name || list_behavior) {
+			const resolved = await resolveIds(token, { space_name, board_name, list_name, list_behavior });
+			if (!payload.list_id && resolved.list_id) payload.list_id = resolved.list_id;
+			if (!payload.board_id && resolved.board_id) payload.board_id = resolved.board_id;
+			if (!payload.project_id && resolved.project_id) payload.project_id = resolved.project_id;
+		}
+	}
+
+	if (!payload.list_id) {
+		throw new Error("list_id is required. Provide it directly or use list_name/list_behavior with board_name/space_name.");
+	}
 
 	if (!payload.board_id && !payload.sprint_id) {
-		throw new Error("Either board_id or sprint_id must be provided.");
+		throw new Error("board_id or sprint_id is required. Provide it directly or use board_name/space_name.");
 	}
 
 	// Remove undefined values from payload to ensure all fields are sent
@@ -321,6 +340,32 @@ export async function removeCardTag(
 			method: "DELETE",
 		},
 	);
+}
+
+export const createCardsSchema = z.object({
+	team_id: z.string().describe("Team/workspace ID"),
+	cards: z
+		.array(createCardSchema.omit({ team_id: true }))
+		.min(1)
+		.describe("Array of cards to create. All cards are created in parallel."),
+});
+
+export async function createCards(
+	args: z.infer<typeof createCardsSchema>,
+	token: string,
+) {
+	const { team_id, cards } = args;
+	const results = await Promise.all(
+		cards.map((card) => createCard({ team_id, ...card }, token)),
+	);
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: JSON.stringify(results, null, 2),
+			},
+		],
+	};
 }
 
 export function registerCardTools(server: McpServer, authToken: string) {

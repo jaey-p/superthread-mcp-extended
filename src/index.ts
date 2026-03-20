@@ -3,6 +3,7 @@ import { get_my_account } from "./tools/user.js";
 import { getLandingPageHtml } from "./landing-page.js";
 import {
 	createCard,
+	createCards,
 	getCard,
 	updateCard,
 	addRelatedCard,
@@ -13,6 +14,7 @@ import {
 	removeCardTag,
 	getCardsAssignedToUser,
 } from "./tools/cards.js";
+import { getContext } from "./lib/context.js";
 import { get_board_details } from "./tools/boards.js";
 import { get_spaces } from "./tools/spaces.js";
 import { get_tags, create_tag } from "./tools/tags.js";
@@ -66,6 +68,12 @@ function createMCPHandler(authToken: string) {
 							tools: [
 								// Essential MVP Tools for Screenshot-to-Tasks Workflow
 								{
+									name: "get_context",
+									description:
+										"Get full workspace context in one call: user ID, team ID, all spaces with boards and lists. Use this first instead of calling get_my_account + get_spaces + get_board_details separately.",
+									inputSchema: { type: "object", properties: {} },
+								},
+								{
 									name: "get_my_account",
 									description:
 										"Get current user information with team ID (simplified response)",
@@ -102,69 +110,69 @@ function createMCPHandler(authToken: string) {
 								},
 								{
 									name: "create_card",
-									description: "Create a new task card in a specified list",
+									description: "Create a new task card. Accepts either IDs or names for placement — prefer space_name/board_name/list_name over raw IDs.",
 									inputSchema: {
 										type: "object",
 										properties: {
 											title: { type: "string", description: "Card title" },
-											content: {
-												type: "string",
-												description: "Card description",
-											},
-											team_id: {
-												type: "string",
-												description:
-													"Use the get_my_account tool first to get the team IDs available",
-											},
-											list_id: {
-												type: "string",
-												description: "List ID where the card will be placed",
-											},
-											project_id: {
-												type: "string",
-												description: "Project ID the card belongs to",
-											},
-											board_id: {
-												type: "string",
-												description:
-													"Board ID (required if sprint_id not provided)",
-											},
-											sprint_id: {
-												type: "string",
-												description: "Sprint ID (required if board_id not provided)",
-											},
-											owner_id: {
-												type: "string",
-												description: "Owner user ID",
-											},
-											priority: {
-												type: "number",
-												description: "Priority level (numeric)",
-											},
-											estimate: {
-												type: "number",
-												description: "Estimate in story points",
-											},
-											start_date: {
-												type: "number",
-												description: "Start date as Unix timestamp",
-											},
-											due_date: {
-												type: "number",
-												description: "Due date as Unix timestamp",
-											},
-											parent_card_id: {
-												type: "string",
-												description: "Parent card ID",
-											},
+											content: { type: "string", description: "Card description" },
+											team_id: { type: "string", description: "Team/workspace ID (from get_context)" },
+											// ID-based placement
+											list_id: { type: "string", description: "List ID. Use list_name instead if you don't have the ID." },
+											project_id: { type: "string", description: "Project/space ID. Use space_name instead if you don't have the ID." },
+											board_id: { type: "string", description: "Board ID. Use board_name instead if you don't have the ID." },
+											sprint_id: { type: "string", description: "Sprint ID (alternative to board_id)" },
+											// Name-based placement (preferred)
+											space_name: { type: "string", description: "Space/project name (fuzzy matched). Use instead of project_id." },
+											board_name: { type: "string", description: "Board name (fuzzy matched). Use instead of board_id." },
+											list_name: { type: "string", description: "List name (fuzzy matched). Use instead of list_id." },
+											list_behavior: { type: "string", description: "List behavior: 'unstarted', 'active', 'completed'. Use instead of list_id." },
+											// Card fields
+											owner_id: { type: "string", description: "Owner user ID" },
+											priority: { type: "number", description: "Priority level (numeric)" },
+											estimate: { type: "number", description: "Estimate in story points" },
+											start_date: { type: "number", description: "Start date as Unix timestamp" },
+											due_date: { type: "number", description: "Due date as Unix timestamp" },
+											parent_card_id: { type: "string", description: "Parent card ID" },
 											epic_id: { type: "string", description: "Epic ID" },
-											tag_ids: {
+											tag_ids: { type: "array", items: { type: "string" }, description: "Array of tag IDs" },
+										},
+										required: ["title", "team_id"],
+									},
+								},
+								{
+									name: "create_cards",
+									description: "Create multiple cards at once in parallel. Use this instead of calling create_card repeatedly.",
+									inputSchema: {
+										type: "object",
+										properties: {
+											team_id: { type: "string", description: "Team/workspace ID" },
+											cards: {
 												type: "array",
-												items: { type: "string" },
-												description: "Array of tag IDs to add to the card",
+												description: "Array of cards to create",
+												items: {
+													type: "object",
+													properties: {
+														title: { type: "string" },
+														content: { type: "string" },
+														list_id: { type: "string" },
+														board_id: { type: "string" },
+														project_id: { type: "string" },
+														sprint_id: { type: "string" },
+														space_name: { type: "string" },
+														board_name: { type: "string" },
+														list_name: { type: "string" },
+														list_behavior: { type: "string" },
+														owner_id: { type: "string" },
+														priority: { type: "number" },
+														estimate: { type: "number" },
+														parent_card_id: { type: "string" },
+													},
+													required: ["title"],
+												},
 											},
 										},
-										required: ["title", "team_id", "list_id", "board_id"],
+										required: ["team_id", "cards"],
 									},
 								},
 								{
@@ -644,6 +652,11 @@ Format the output for easy import into Superthread using the create_card tool.`,
 
 						switch (toolName) {
 							// Essential MVP Tools
+							case "get_context":
+								toolResult = await getContext(authToken).then((ctx) => ({
+									content: [{ type: "text" as const, text: JSON.stringify(ctx, null, 2) }],
+								}));
+								break;
 							case "get_my_account":
 								toolResult = await get_my_account(toolArgs, authToken);
 								break;
@@ -655,6 +668,9 @@ Format the output for easy import into Superthread using the create_card tool.`,
 								break;
 							case "create_card":
 								toolResult = await createCard(toolArgs, authToken);
+								break;
+							case "create_cards":
+								toolResult = await createCards(toolArgs, authToken);
 								break;
 							case "get_card":
 								toolResult = await getCard(toolArgs, authToken);
@@ -713,7 +729,7 @@ Format the output for easy import into Superthread using the create_card tool.`,
 									jsonrpc: "2.0",
 									error: {
 										code: -32601,
-										message: `Unknown tool: ${toolName}. Available tools: get_my_account, get_spaces, get_board_details, create_card, get_card, update_card, add_related_card, archive_card, add_card_member, remove_card_member, add_card_tag, remove_card_tag, get_cards_assigned_to_user, get_tags, create_tag, create_checklist, update_checklist, delete_checklist, add_checklist_item, update_checklist_item, delete_checklist_item`,
+										message: `Unknown tool: ${toolName}. Available tools: get_context, get_my_account, get_spaces, get_board_details, create_card, create_cards, get_card, update_card, add_related_card, archive_card, add_card_member, remove_card_member, add_card_tag, remove_card_tag, get_cards_assigned_to_user, get_tags, create_tag, create_checklist, update_checklist, delete_checklist, add_checklist_item, update_checklist_item, delete_checklist_item`,
 									},
 									id,
 								};
