@@ -1,5 +1,6 @@
 // Import essential MVP tool functions only
 import { get_my_account } from "./tools/user.js";
+import { getLandingPageHtml } from "./landing-page.js";
 import {
 	createCard,
 	getCard,
@@ -10,6 +11,7 @@ import {
 	removeCardMember,
 	addCardTag,
 	removeCardTag,
+	getCardsAssignedToUser,
 } from "./tools/cards.js";
 import { get_board_details } from "./tools/boards.js";
 import { get_spaces } from "./tools/spaces.js";
@@ -347,6 +349,19 @@ function createMCPHandler(authToken: string) {
 									},
 								},
 								{
+									name: "get_cards_assigned_to_user",
+									description: "Get all cards assigned to a specific user, optionally filtered by project",
+									inputSchema: {
+										type: "object",
+										properties: {
+											team_id: { type: "string", description: "Team ID" },
+											user_id: { type: "string", description: "User ID to get assigned cards for" },
+											project_id: { type: "string", description: "Filter by project ID (optional)" },
+										},
+										required: ["team_id", "user_id"],
+									},
+								},
+								{
 									name: "get_tags",
 									description:
 										"Get all tags for a team, optionally filtered by project ID",
@@ -665,6 +680,9 @@ Format the output for easy import into Superthread using the create_card tool.`,
 							case "remove_card_tag":
 								toolResult = await removeCardTag(toolArgs, authToken);
 								break;
+							case "get_cards_assigned_to_user":
+								toolResult = await getCardsAssignedToUser(toolArgs, authToken);
+								break;
 							case "get_tags":
 								toolResult = await get_tags(toolArgs, authToken);
 								break;
@@ -695,7 +713,7 @@ Format the output for easy import into Superthread using the create_card tool.`,
 									jsonrpc: "2.0",
 									error: {
 										code: -32601,
-										message: `Unknown tool: ${toolName}. Available tools: get_my_account, get_spaces, get_board_details, create_card, get_card, update_card, add_related_card, archive_card, add_card_member, remove_card_member, add_card_tag, remove_card_tag, get_tags, create_tag, create_checklist, update_checklist, delete_checklist, add_checklist_item, update_checklist_item, delete_checklist_item`,
+										message: `Unknown tool: ${toolName}. Available tools: get_my_account, get_spaces, get_board_details, create_card, get_card, update_card, add_related_card, archive_card, add_card_member, remove_card_member, add_card_tag, remove_card_tag, get_cards_assigned_to_user, get_tags, create_tag, create_checklist, update_checklist, delete_checklist, add_checklist_item, update_checklist_item, delete_checklist_item`,
 									},
 									id,
 								};
@@ -967,7 +985,23 @@ export default {
 			);
 		}
 
-		// Only handle POST requests to /mcp/app endpoint
+
+		// Serve landing page at root
+		if (request.method === "GET" && pathname === "/") {
+			return new Response(getLandingPageHtml(), {
+				status: 200,
+				headers: { "Content-Type": "text/html" },
+			});
+		}
+
+		// Redirect any other GET request (like /mcp/app via browser) to root
+		if (request.method === "GET") {
+			const baseUrl = `${url.protocol}//${url.host}`;
+			return Response.redirect(`${baseUrl}/`, 307);
+		}
+
+		// Only handle POST requests to /mcp/app endpoint (for MCP JSON-RPC)
+		// Everything else at this point is a 404
 		if (request.method !== "POST" || pathname !== "/mcp/app") {
 			return new Response("Not Found", { status: 404 });
 		}
@@ -976,10 +1010,6 @@ export default {
 		const authToken = extractBearerToken(request);
 		if (!authToken) {
 			const authHeader = request.headers.get("Authorization");
-			const allHeaders = Object.fromEntries(request.headers.entries());
-
-			// Debug: Log all headers to help diagnose the issue
-			console.log("MCP Request Headers:", JSON.stringify(allHeaders, null, 2));
 
 			const debugInfo = authHeader
 				? `Received: "${authHeader.substring(0, 50)}..."`

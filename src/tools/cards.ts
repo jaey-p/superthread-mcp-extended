@@ -10,7 +10,7 @@ export const createCardSchema = z.object({
 		),
 	title: z.string().describe("Card title"),
 	list_id: z.string().describe("List ID where the card will be placed"),
-	project_id: z.string().describe("Project ID the card belongs to"),
+	project_id: z.string().optional().describe("Project ID the card belongs to"),
 	board_id: z
 		.string()
 		.optional()
@@ -180,9 +180,6 @@ export async function createCard(
 		delete cleanPayload.tag_ids;
 	}
 
-	// Debug: Log payload to help diagnose issues
-	console.log("createCard payload:", JSON.stringify(cleanPayload, null, 2));
-
 	return apiClient.makeRequest(`/${team_id}/cards`, token, {
 		method: "POST",
 		body: JSON.stringify(cleanPayload),
@@ -194,9 +191,7 @@ export async function getCard(
 	token: string,
 ) {
 	const { team_id, card_id } = args;
-	const result = await apiClient.makeRequest(`/${team_id}/cards/${card_id}`, token);
-	console.log("getCard response:", JSON.stringify(result, null, 2));
-	return result;
+	return apiClient.makeRequest(`/${team_id}/cards/${card_id}`, token);
 }
 
 export async function updateCard(
@@ -232,9 +227,6 @@ export async function updateCard(
 	if (Object.keys(cleanPayload).length === 0) {
 		throw new Error("No fields to update were provided.");
 	}
-	
-	// Debug: Log payload to help diagnose issues
-	console.log("updateCard payload:", JSON.stringify(cleanPayload, null, 2));
 	
 	return apiClient.makeRequest(`/${team_id}/cards/${card_id}`, token, {
 		method: "PATCH",

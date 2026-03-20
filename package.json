@@ -12,7 +12,7 @@
 		"start:standalone": "bun run src/standalone.ts",
 		"cf-typegen": "wrangler types",
 		"type-check": "tsc --noEmit",
-		"build": "esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --format=esm --external:@modelcontextprotocol/sdk --external:express --external:cloudflare:workers --sourcemap",
+		"build": "esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --format=esm --external:@modelcontextprotocol/sdk --external:express --external:cloudflare:workers --sourcemap --loader:.html=text",
 		"test": "curl -f http://localhost:8787/health || echo 'Server not running'"
 	},
 	"dependencies": {
